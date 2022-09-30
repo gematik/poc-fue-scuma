@@ -1,0 +1,109 @@
+= SCUMA - Smart Contract based User Managed Access
+:toc:
+:icons: font
+
+This concept defines a smart contract which allows the owner of a resource to grant access to resources he owns to particular users.
+
+== Definitions
+
+=== EOA - external owned account
+
+In general, there are two types of accounts: externally owned accounts, controlled by private keys, and contract accounts, controlled by their contract code. See https://ethereum.org/en/whitepaper/#ethereum-accounts[Ethereum Accounts].
+
+=== Resource - web resource
+
+A resource is available via the internet and can be localized and access by an Uniform Resource Locator (URL).
+
+=== Resource Provider
+The resource provider holds resources and provides interfaces to access them.
+
+=== ProviderId
+The ProviderId uniquely identifies the provider. It is the 20 byte address of an EOA controlled by the provider.
+
+=== User
+The user accesses resources by using the interfaces provided by the resource provider.
+
+=== UserId
+The UserId uniquely identifies the user. It is the 20 byte address of an EOA controlled by the user.
+
+=== Owner
+The owner is a special user which owns resources. The ownership of resources is defined by the content of resources. The resources owned by the owner contain the UserId of the owner.
+
+=== Smart contract
+Smart contracts digitize agreements by turning the terms of an agreement into computer code that automatically executes when the contract terms are met. They are stored on a blockchain, addressed by a contract account, behave exactly as programmed and cannot be changed. See https://ethereum.org/en/smart-contracts[Smart Contracts].
+
+=== ContractId
+The ContractId is the 20 byte address of a contract account. See https://ethereum.org/en/whitepaper/#ethereum-accounts[Ethereum Accounts].
+
+
+
+== Use Cases
+
+=== Protect resource
+Resources are protected by a default deny policy. In order to enable the resource owner to define access policies the resource needs to be registered at the smart contract by the resource provider. Beforehand, the resource provider needs the entitlement of the resource owner to protect the resource on his behalf.
+
+[plantuml]
+.sequenz diagram protect resource
+----
+@startuml
+
+title Protect Resource
+
+participant "Resource Provide" as PROVIDER
+participant "SCUMA" as SC
+participant "Owner" as OWNER
+
+activate PROVIDER
+PROVIDER <-- OWNER : GET Resource(ResourceURL, OwnerId)
+PROVIDER -> OWNER : Authenticate(Challenge) : SignedChallenge
+PROVIDER --> OWNER : Resource
+deactivate PROVIDER
+PROVIDER <-- OWNER : ProtectResource(ResourceURL, OwnerId)
+activate PROVIDER
+PROVIDER --> OWNER : RequestEntitlement(ProviderId)
+PROVIDER <- OWNER : Authenticate(Challenge) : SignedChallenge
+activate OWNER
+SC <- OWNER : RegisterProvider(ProviderId) : Boolean
+PROVIDER <-- OWNER : Success
+deactivate OWNER
+PROVIDER --> SC : RegisterResource(ProviderId)
+activate SC
+SC->SC : CheckEntitlement : Boolean
+PROVIDER <-- SC : ProtectedResourceId
+deactivate SC
+PROVIDER -> PROVIDER : Store Mapping ResourceURL -> ProtectedResourceId
+PROVIDER --> OWNER : ProtectedResourceId
+deactivate PROVIDER
+SC <- OWNER : SetPolicy(Policy(ProtectedResourceId, UserID, Method), OwnerId) : Boolean
+@enduml
+----
+
+=== Access resource
+The user access the resource via the interfaces provided by the resource provider using his EOA. The provider maps the resource request onto the protected resources and asks the smart contract for permissions. The smart contract returns the permissions which then are enforced by the provider.
+
+[plantuml]
+.sequenz diagram access resource
+----
+@startuml
+
+title Protect Resource
+
+participant "User" as USER
+participant "Resource Provide" as PROVIDER
+participant "SCUMA" as SC
+
+activate PROVIDER
+USER --> PROVIDER : GET Resource(ResourceURL, UserId)
+PROVIDER -> PROVIDER : Maps resource request onto ProtectedResourceIds
+USER <- PROVIDER : Authenticate(Challenge) : SignedChallenge
+activate SC
+PROVIDER --> SC : RequestsPermissions(listOfProtectedResources)
+SC->SC : CheckEntitlement : Boolean
+SC->SC : CheckPolicies : listOfPermissions
+PROVIDER <-- SC : listOfPermissions
+deactivate SC
+PROVIDER->PROVIDER : EnforcePermissions
+USER <-- PROVIDER : Resources
+
+@enduml
+----
