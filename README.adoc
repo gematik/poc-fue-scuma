@@ -1,6 +1,7 @@
 = SCUMA - Smart Contract based User Managed Access
 :toc:
 :icons: font
+:source-highlighter: rouge
 
 This concept defines a smart contract which allows the owner of a resource to grant access to resources he owns to particular users.
 
@@ -49,7 +50,7 @@ Resources are protected by a default deny policy. In order to enable the resourc
 
 title Protect Resource
 
-participant "Resource Provide" as PROVIDER
+participant "Resource Provider" as PROVIDER
 participant "SCUMA" as SC
 participant "Owner" as OWNER
 
@@ -60,15 +61,18 @@ PROVIDER --> OWNER : Resource
 deactivate PROVIDER
 PROVIDER <-- OWNER : ProtectResource(ResourceURL, OwnerId)
 activate PROVIDER
-PROVIDER --> OWNER : RequestEntitlement(ProviderId)
-PROVIDER <- OWNER : Authenticate(Challenge) : SignedChallenge
+opt Protection Authorization not yet available
+PROVIDER -> PROVIDER : Generate ProtectAuthorizationId
+PROVIDER --> OWNER : RequestProtectionAuthoriazion(ProtectionAuthorizationId)
 activate OWNER
-SC <- OWNER : RegisterProvider(ProviderId) : Boolean
+SC <- OWNER : RegisterProvider(ProtectionAuthorizationId) : Boolean
 PROVIDER <-- OWNER : Success
 deactivate OWNER
-PROVIDER --> SC : RegisterResource(ProviderId)
+PROVIDER -> PROVIDER : Store Mapping Owner -> ProtectionAuthorizationId
+end
+PROVIDER --> SC : RegisterResource(ProtectionAuthorizationId)
 activate SC
-SC->SC : CheckEntitlement : Boolean
+SC->SC : CheckProtectionAuthorization : Boolean
 PROVIDER <-- SC : ProtectedResourceId
 deactivate SC
 PROVIDER -> PROVIDER : Store Mapping ResourceURL -> ProtectedResourceId
@@ -86,10 +90,10 @@ The user access the resource via the interfaces provided by the resource provide
 ----
 @startuml
 
-title Protect Resource
+title Access Resource
 
 participant "User" as USER
-participant "Resource Provide" as PROVIDER
+participant "Resource Provider" as PROVIDER
 participant "SCUMA" as SC
 
 activate PROVIDER
@@ -97,13 +101,59 @@ USER --> PROVIDER : GET Resource(ResourceURL, UserId)
 PROVIDER -> PROVIDER : Maps resource request onto ProtectedResourceIds
 USER <- PROVIDER : Authenticate(Challenge) : SignedChallenge
 activate SC
-PROVIDER --> SC : RequestsPermissions(listOfProtectedResources)
-SC->SC : CheckEntitlement : Boolean
-SC->SC : CheckPolicies : listOfPermissions
-PROVIDER <-- SC : listOfPermissions
+PROVIDER --> SC : RequestsPermissions((ProtectionAuthorizationId,\n listOf(PermissionRequest(ProtectedResourceID,\n Method)), userId)
+SC->SC : CheckProtectionAuthorization(ProtectionAuthorizationId) : Boolean
+SC->SC : CheckPolicies(listOf(PermissionRequest(ProtectedResourceID, Method)),\n userId) : listOf(Permission(ProtectedResourceID, Method))
+PROVIDER <-- SC : listOf(Permission(ProtectedResourceID, Method))
 deactivate SC
 PROVIDER->PROVIDER : EnforcePermissions
 USER <-- PROVIDER : Resources
 
 @enduml
 ----
+
+== Smart contract
+
+[source,solidity]
+----
+contract ScumaContract {
+
+    mapping(address => address[]) public protectionAuthorizationIds;
+    mapping(uint256 => Policy[]) public policies;
+
+    struct Policy {
+        address who;
+        AccessMethod how;
+    }
+
+    enum AccessMethod { Create, Read, Update, Delete }
+
+    struct Permission {
+        uint32 protectedResourceId;
+        bool access;
+    }
+
+    struct PermissionRequest {
+        uint32 protectedResourceId;
+        AccessMethod method;
+    }
+
+    function registerProvider(address protectionAuthorizationId) public;
+    function registerResource() public;
+    function setPolicy(uint256 protectedResourceId, address userID, AccessMethod method) public;
+    function requestPermissions(PermissionRequest[] listOfPermissionRequests) public returns (Permission[]);
+
+    event protectedResource(
+        uint256 protectedResourcerId
+    );
+
+}
+----
+
+== TODO's
+
+* DID instead of EOA
+* attribute based access control or groups (e.g. merkle proofs ...)
+* privacy aware policies
+
+
