@@ -18,8 +18,8 @@ A resource is available via the internet and can be localized and access by an U
 === Resource Provider
 The resource provider holds resources and provides interfaces to access them.
 
-=== ProviderId
-The ProviderId uniquely identifies the provider. It is the 20 byte address of an EOA controlled by the provider.
+=== ProtectionAuthorizationId
+The ProtectionAuthorizationId is the 20 byte address of an EOA controlled by the provider. The owner authorizes the controller of this Id to use a smart contract to protect his resources.
 
 === User
 The user accesses resources by using the interfaces provided by the resource provider.
@@ -66,14 +66,15 @@ PROVIDER -> PROVIDER : Generate ProtectAuthorizationId
 PROVIDER --> OWNER : RequestProtectionAuthoriazion(ProtectionAuthorizationId)
 activate OWNER
 SC <- OWNER : RegisterProvider(ProtectionAuthorizationId) : Boolean
-PROVIDER <-- OWNER : Success
+PROVIDER <-- OWNER : ContractId
 deactivate OWNER
-PROVIDER -> PROVIDER : Store Mapping Owner -> ProtectionAuthorizationId
+PROVIDER -> PROVIDER : Store Mapping Owner -> ContractId, ProtectionAuthorizationId
 end
-PROVIDER --> SC : RegisterResource(ProtectionAuthorizationId)
+PROVIDER --> SC : RegisterResource(ProtectionAuthorizationId, ProtectedResourceId)
 activate SC
 SC->SC : CheckProtectionAuthorization : Boolean
-PROVIDER <-- SC : ProtectedResourceId
+SC->SC : RegisterId : Boolean
+PROVIDER <-- SC : Success
 deactivate SC
 PROVIDER -> PROVIDER : Store Mapping ResourceURL -> ProtectedResourceId
 PROVIDER --> OWNER : ProtectedResourceId
@@ -116,37 +117,62 @@ USER <-- PROVIDER : Resources
 
 [source,solidity]
 ----
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
 contract ScumaContract {
 
-    mapping(address => address[]) public protectionAuthorizationIds;
-    mapping(uint256 => Policy[]) public policies;
+    address public Owner;
+
+    address[] public protectionAuthorizationIds;
+    mapping(address => uint) public protectionAuthorizationIdIndices;
+    Policy[] public policies;
+    Rule[][] public ruleLists;
+    mapping(uint256 => uint) public policyIndices; // protectedResourceId to policy index
 
     struct Policy {
-        address who;
+        uint256 what;  // protected resource id
+        Rule[] ruleList;
+    }
+
+    struct Rule {
+        address who;  // userId
         AccessMethod how;
     }
 
-    enum AccessMethod { Create, Read, Update, Delete }
+    enum AccessMethod {Create, Read, Update, Delete}
 
     struct Permission {
         uint32 protectedResourceId;
-        bool access;
+        AccessMethod grantedMethod;
     }
 
     struct PermissionRequest {
         uint32 protectedResourceId;
-        AccessMethod method;
+        AccessMethod requestedMethod;
     }
 
-    function registerProvider(address protectionAuthorizationId) public;
-    function registerResource() public;
-    function setPolicy(uint256 protectedResourceId, address userID, AccessMethod method) public;
-    function requestPermissions(PermissionRequest[] listOfPermissionRequests) public returns (Permission[]);
+    modifier onlyOwner();
 
-    event protectedResource(
-        uint256 protectedResourcerId
-    );
+    modifier onlyAuthorizedProviders();
 
+    function RegisterProvider(address protectionAuthorizationId) public onlyOwner;
+
+    function UnregisterProvider(address protectionAuthorizationId) public onlyOwner;
+
+    function UnregisterAllProviders() public onlyOwner;
+
+    function registerResource(uint32 protectedResourceId) public onlyAuthorizedProviders;
+
+    function unregisterResource(uint32 protectedResourceId) public onlyAuthorizedProviders;
+
+    function UnregisterAllResources() public onlyAuthorizedProviders;
+
+    function setRule(uint256 protectedResourceId, address userId, AccessMethod method) public onlyOwner;
+
+    function deleteRule(uint256 protectedResourceId, uint index) public onlyOwner;
+
+    function requestPermissions(address userId, PermissionRequest[] calldata permissionRequests) view external returns (Permission[] memory) onlyAuthorizedProviders;
 }
 ----
 
