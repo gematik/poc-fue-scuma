@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm") version "1.7.10"
+    kotlin("plugin.serialization") version "1.7.10"
     id("de.gematik.kether.codegen") version "1.0-SNAPSHOT"
-    application
 }
 
 group = "de.gematik.scuma"
@@ -17,7 +17,9 @@ repositories {
 dependencies {
     implementation("de.gematik.kether:kether:1.0-SNAPSHOT")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.4.0")
-    testImplementation(kotlin("test"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
+    testImplementation("junit:junit:4.13.2")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.8.2")
 }
 
 tasks.test {
@@ -26,10 +28,6 @@ tasks.test {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
-}
-
-application {
-    mainClass.set("MainKt")
 }
 
 configure<de.gematik.kether.codegen.CodeGeneratorPluginExtension> {
