@@ -85,8 +85,9 @@ class ScumaContractTests {
     fun requestPermission() {
         runBlocking {
             scumaResourceProvider.run {
-                val permissions = requestPermissions(protectionAuthorizationId, arrayOf(ScumaContract.PermissionRequest(protectedResourceId = AbiUint32(1), AbiUint8(1))))
+                val permissions = requestPermissions(protectionAuthorizationId, listOf(ScumaContract.PermissionRequest(protectedResourceId = AbiUint32(1), AbiUint8(1))))
                 assert(permissions.size == 1)
+                println(permissions)
             }
         }
     }

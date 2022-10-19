@@ -103,7 +103,7 @@ class ScumaContract(
     }
 
     @Suppress("UNCHECKED_CAST")
-    fun requestPermissions(userId: AbiAddress, permissionRequests: Array<PermissionRequest>): Array<Permission>
+    fun requestPermissions(userId: AbiAddress, permissionRequests: List<PermissionRequest>): List<Permission>
     {
         val params = DataEncoder()
             .encode(Data4(functionRequestPermissions))
@@ -111,7 +111,7 @@ class ScumaContract(
             .encode(permissionRequests, -1).build()
         val decoder = DataDecoder(call(params))
         val result = decoder.next(Permission::class, -1)
-        return result as Array<Permission>
+        return result as List<Permission>
     }
 
     suspend fun setRule(protectedResourceId: AbiUint256, userId: AbiAddress, method: AbiUint8): TransactionReceipt {
