@@ -3,13 +3,13 @@ pragma solidity ^0.8.0;
 
 contract ScumaContract {
 
-    address public Owner;
+    address Owner;
 
-    address[] public protectionAuthorizationIds;
-    mapping(address => uint) public protectionAuthorizationIdIndices;
-    Policy[] public policies;
-    Rule[][] public ruleLists;
-    mapping(uint256 => uint) public policyIndices; // protectedResourceId to policy index
+    address[] protectionAuthorizationIds;
+    mapping(address => uint) protectionAuthorizationIdIndices;
+    Policy[] policies;
+    Rule[][] ruleLists;
+    mapping(uint256 => uint) policyIndices; // protectedResourceId to policy index
 
     struct Policy {
         uint256 what;  // protected resource id
@@ -24,12 +24,12 @@ contract ScumaContract {
     enum AccessMethod {Create, Read, Update, Delete}
 
     struct Permission {
-        uint32 protectedResourceId;
+        uint256 protectedResourceId;
         AccessMethod grantedMethod;
     }
 
     struct PermissionRequest {
-        uint32 protectedResourceId;
+        uint256 protectedResourceId;
         AccessMethod requestedMethod;
     }
 
@@ -69,7 +69,7 @@ contract ScumaContract {
         }
     }
 
-    function registerResource(uint32 protectedResourceId) public onlyAuthorizedProviders {
+    function registerResource(uint256 protectedResourceId) public onlyAuthorizedProviders {
         ruleLists.push();
         policies.push();
         policies[policies.length - 1].what = protectedResourceId;
@@ -77,7 +77,7 @@ contract ScumaContract {
         policyIndices[protectedResourceId] = policies.length - 1;
     }
 
-    function unregisterResource(uint32 protectedResourceId) public {
+    function unregisterResource(uint256 protectedResourceId) public {
         uint policyIndex = policyIndices[protectedResourceId];
         if (policyIndex > 0) {// policy exists
             policies[policyIndex] = policies[policies.length - 1];

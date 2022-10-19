@@ -1,6 +1,6 @@
 package de.gematik.scuma.contracts
 
-import de.gematik.kether.abi.types.AbiUint32
+import de.gematik.kether.abi.types.AbiUint256
 import de.gematik.kether.abi.types.AbiUint8
 import de.gematik.kether.eth.Eth
 import de.gematik.kether.eth.types.Address
@@ -22,7 +22,7 @@ class ScumaContractTests {
     companion object {
         val resourceOwnerId = Address("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73")
         val protectionAuthorizationId = Address("0xB389e2Ac92361c81481aFeF1cBF29881005996a3")
-        val scumaContractId = Address("0xf4074b3685f8f40f2dca83742dab19912a0eb2c3")
+        val scumaContractId = Address("0x1b24d90f2210d6df2fa19acaef1e717bdb7a4668")
         lateinit var scumaResourceOwner: ScumaContract
         lateinit var scumaResourceProvider: ScumaContract
 
@@ -56,7 +56,7 @@ class ScumaContractTests {
     fun registerResourceWrongProvider() {
         runBlocking {
             scumaResourceOwner.run {
-                assert(runCatching {registerResource(AbiUint32(1))}.isFailure)
+                assert(runCatching { registerResource(AbiUint256(2)) }.isFailure)
             }
         }
     }
@@ -65,7 +65,7 @@ class ScumaContractTests {
     fun registerResource() {
         runBlocking {
             scumaResourceProvider.run {
-                val receipt = registerResource(AbiUint32(1))
+                val receipt = registerResource(AbiUint256(2))
                 assert(receipt.isSuccess)
             }
         }
@@ -75,7 +75,7 @@ class ScumaContractTests {
     fun setPolicy() {
         runBlocking {
             scumaResourceOwner.run {
-                val receipt = setRule(AbiUint32(1), protectionAuthorizationId, AbiUint8(1))
+                val receipt = setRule(AbiUint256(2), protectionAuthorizationId, AbiUint8(1))
                 assert(receipt.isSuccess)
             }
         }
@@ -85,9 +85,12 @@ class ScumaContractTests {
     fun requestPermission() {
         runBlocking {
             scumaResourceProvider.run {
-                val permissions = requestPermissions(protectionAuthorizationId, listOf(ScumaContract.PermissionRequest(protectedResourceId = AbiUint32(1), AbiUint8(1))))
-                assert(permissions.size == 1)
+                val permissions = requestPermissions(
+                    protectionAuthorizationId,
+                    listOf(ScumaContract.PermissionRequest(protectedResourceId = AbiUint256(2), AbiUint8(1)))
+                )
                 println(permissions)
+                assert(permissions.size == 1)
             }
         }
     }
