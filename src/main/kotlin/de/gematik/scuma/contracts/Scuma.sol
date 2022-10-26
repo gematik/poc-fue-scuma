@@ -49,12 +49,12 @@ contract ScumaContract {
         _;
     }
 
-    function RegisterProvider(address protectionAuthorizationId) public onlyOwner {
+    function registerProvider(address protectionAuthorizationId) public onlyOwner {
         protectionAuthorizationIds.push(protectionAuthorizationId);
         protectionAuthorizationIdIndices[protectionAuthorizationId] = protectionAuthorizationIds.length - 1;
     }
 
-    function UnregisterProvider(address protectionAuthorizationId) public onlyOwner {
+    function unregisterProvider(address protectionAuthorizationId) public onlyOwner {
         uint index = protectionAuthorizationIdIndices[protectionAuthorizationId];
         if (index > 0) {
             protectionAuthorizationIds[index] = protectionAuthorizationIds[protectionAuthorizationIds.length - 1];
@@ -62,7 +62,7 @@ contract ScumaContract {
         }
     }
 
-    function UnregisterAllProviders() public onlyOwner {
+    function unregisterAllProviders() public onlyOwner {
         for (uint i = 0; i < protectionAuthorizationIds.length - 1; i++) {
             delete protectionAuthorizationIdIndices[protectionAuthorizationIds[i]];
             protectionAuthorizationIds.pop();
@@ -86,7 +86,7 @@ contract ScumaContract {
         }
     }
 
-    function UnregisterAllResources() public onlyOwner {
+    function unregisterAllResources() public onlyOwner {
         for (uint i = policies.length - 1; i < 0; i--) {
             delete policyIndices[policies[i].what];
             policies.pop();

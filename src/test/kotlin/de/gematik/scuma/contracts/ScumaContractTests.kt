@@ -11,6 +11,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
+import java.math.BigInteger
 
 /**
  * Created by rk on 02.08.2022.
@@ -21,8 +22,10 @@ class ScumaContractTests {
 
     companion object {
         val resourceOwnerId = Address("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73")
+        val resourceOwnerPrivateKey = BigInteger("8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)
         val protectionAuthorizationId = Address("0xB389e2Ac92361c81481aFeF1cBF29881005996a3")
-        val scumaContractId = Address("0x1b24d90f2210d6df2fa19acaef1e717bdb7a4668")
+        val protectionAuthorizationPrivateKey = BigInteger("64f2a57bccb23a83e3b8bd0755cc66bfb362f175a4996e066fd964497c504128", 16)
+        val scumaContractId = Address("0x7ef84473a4e772fb6adfa1b0c6728a3dbf268dd7")
         lateinit var scumaResourceOwner: ScumaContract
         lateinit var scumaResourceProvider: ScumaContract
 
@@ -30,10 +33,9 @@ class ScumaContractTests {
         @JvmStatic
         fun scumaInit() {
             runBlocking {
-                val ethereum1 = Eth(Rpc("http://ethereum1.lab.gematik.de:8547", "ws://ethereum1.lab.gematik.de:8546"))
-                scumaResourceOwner = ScumaContract(ethereum1, Transaction(to = scumaContractId, from = resourceOwnerId))
-                scumaResourceProvider =
-                    ScumaContract(ethereum1, Transaction(to = scumaContractId, from = protectionAuthorizationId))
+                val ethereum1 = Eth(Rpc("http://ethereum1.lab.gematik.de:8545", "ws://ethereum1.lab.gematik.de:8546"))
+                scumaResourceOwner = ScumaContract(ethereum1, Transaction(to = scumaContractId, from = resourceOwnerId), resourceOwnerPrivateKey)
+                scumaResourceProvider = ScumaContract(ethereum1, Transaction(to = scumaContractId, from = protectionAuthorizationId), protectionAuthorizationPrivateKey)
             }
         }
 
