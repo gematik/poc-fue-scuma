@@ -36,7 +36,9 @@ contract ScumaContract {
     constructor () {
         Owner = msg.sender;
         protectionAuthorizationIds.push();
+        // index 0 reserved to indicate no id
         policies.push();
+        // index 0 reserved to indicate no id
     }
 
     modifier onlyOwner(){
@@ -62,14 +64,29 @@ contract ScumaContract {
         }
     }
 
-    function unregisterAllProviders() public onlyOwner {
-        for (uint i = 0; i < protectionAuthorizationIds.length - 1; i++) {
-            delete protectionAuthorizationIdIndices[protectionAuthorizationIds[i]];
-            protectionAuthorizationIds.pop();
+    function getProviderCount() public onlyOwner view returns (uint256){
+        return protectionAuthorizationIds.length - 1;
+    }
+
+    function getProviders() public onlyOwner view returns (address[] memory){
+        address[] memory providerIds = new address[](protectionAuthorizationIds.length-1);
+        for (uint i = 1; i < protectionAuthorizationIds.length; i++) {
+            providerIds[i-1] = protectionAuthorizationIds[i];
         }
+        return providerIds;
+    }
+
+    function unregisterAllProviders() public onlyOwner {
+        for (uint i = 1; i < protectionAuthorizationIds.length; i++) {
+            delete protectionAuthorizationIdIndices[protectionAuthorizationIds[i]];
+        }
+        delete protectionAuthorizationIds;
+        protectionAuthorizationIds.push();
     }
 
     function registerResource(uint256 protectedResourceId) public onlyAuthorizedProviders {
+        uint policyIndex = policyIndices[protectedResourceId];
+        require(policyIndex == 0, 'rejected - protected resource already exist');
         ruleLists.push();
         policies.push();
         policies[policies.length - 1].what = protectedResourceId;
@@ -77,22 +94,34 @@ contract ScumaContract {
         policyIndices[protectedResourceId] = policies.length - 1;
     }
 
-    function unregisterResource(uint256 protectedResourceId) public {
+    function unregisterResource(uint256 protectedResourceId) public onlyAuthorizedProviders {
         uint policyIndex = policyIndices[protectedResourceId];
-        if (policyIndex > 0) {// policy exists
-            policies[policyIndex] = policies[policies.length - 1];
-            policies.pop();
-            delete policyIndices[protectedResourceId];
-        }
+        require(policyIndex > 0, 'rejected - protected resource does not exist');
+        policies[policyIndex] = policies[policies.length - 1];
+        policies.pop();
+        delete policyIndices[protectedResourceId];
     }
 
-    function unregisterAllResources() public onlyOwner {
-        for (uint i = policies.length - 1; i < 0; i--) {
+    function getResourceCount() public onlyAuthorizedProviders view returns (uint256){
+        return policies.length-1;
+    }
+
+    function getResourceIds() public onlyAuthorizedProviders view returns (uint256[] memory){
+        uint256[] memory resourceIds = new uint256[](policies.length-1);
+        for (uint i = 1; i < policies.length; i++) {
+            resourceIds[i-1] = policies[i].what;
+        }
+        return resourceIds;
+    }
+
+    function unregisterAllResources() public onlyAuthorizedProviders {
+        for (uint i = 0; i < policies.length; i++) {
             delete policyIndices[policies[i].what];
-            policies.pop();
         }
+        delete policies;
+        policies.push();
+        delete ruleLists;
     }
-
 
     function setRule(uint256 protectedResourceId, address userId, AccessMethod method) public onlyOwner {
         uint index = policyIndices[protectedResourceId];
@@ -101,7 +130,13 @@ contract ScumaContract {
         }
     }
 
-    function deleteRule(uint256 protectedResourceId, uint index) public {
+    function getPolicy(uint256 protectedResourceId) public onlyOwner view returns (Rule[] memory){
+        uint policyIndex = policyIndices[protectedResourceId];
+        require(policyIndex > 0, 'protected resource does not exist');
+        return policies[policyIndex].ruleList;
+    }
+
+    function deleteRule(uint256 protectedResourceId, uint index) public onlyOwner {
         uint policyIndex = policyIndices[protectedResourceId];
         require(policyIndex > 0, 'protected resource does not exist');
         Policy storage policy = policies[policyIndex];
@@ -110,7 +145,7 @@ contract ScumaContract {
         policy.ruleList.pop();
     }
 
-    function requestPermissions(address userId, PermissionRequest[] calldata permissionRequests) view external returns (Permission[] memory){
+    function requestPermissions(address userId, PermissionRequest[] calldata permissionRequests) public onlyAuthorizedProviders view returns (Permission[] memory){
         // first count permissions
         uint count = 0;
         for (uint i = 0; i < permissionRequests.length; i++) {

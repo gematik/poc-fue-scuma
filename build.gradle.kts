@@ -22,8 +22,8 @@ dependencies {
     implementation("de.gematik.kether:kether:1.0-SNAPSHOT")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
-    testImplementation("junit:junit:4.13.2")
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.8.2")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
+    testImplementation("org.junit.platform:junit-platform-suite-engine:1.9.1")
 }
 
 tasks.test {

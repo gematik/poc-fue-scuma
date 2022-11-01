@@ -8,48 +8,6 @@
     "inputs":
     [
       {
-        "internalType": "address",
-        "name": "protectionAuthorizationId",
-        "type": "address"
-      }
-    ],
-    "name": "RegisterProvider",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "UnregisterAllProviders",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "UnregisterAllResources",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs":
-    [
-      {
-        "internalType": "address",
-        "name": "protectionAuthorizationId",
-        "type": "address"
-      }
-    ],
-    "name": "UnregisterProvider",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs":
-    [
-      {
         "internalType": "uint256",
         "name": "protectedResourceId",
         "type": "uint256"
@@ -61,6 +19,110 @@
       }
     ],
     "name": "deleteRule",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs":
+    [
+      {
+        "internalType": "uint256",
+        "name": "protectedResourceId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPolicy",
+    "outputs":
+    [
+      {
+        "components":
+        [
+          {
+            "internalType": "address",
+            "name": "who",
+            "type": "address"
+          },
+          {
+            "internalType": "enum ScumaContract.AccessMethod",
+            "name": "how",
+            "type": "uint8"
+          }
+        ],
+        "internalType": "struct ScumaContract.Rule[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getProviderCount",
+    "outputs":
+    [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getProviders",
+    "outputs":
+    [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getResourceCount",
+    "outputs":
+    [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getResourceIds",
+    "outputs":
+    [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs":
+    [
+      {
+        "internalType": "address",
+        "name": "protectionAuthorizationId",
+        "type": "address"
+      }
+    ],
+    "name": "registerProvider",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -151,6 +213,34 @@
       }
     ],
     "name": "setRule",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "unregisterAllProviders",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "unregisterAllResources",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs":
+    [
+      {
+        "internalType": "address",
+        "name": "protectionAuthorizationId",
+        "type": "address"
+      }
+    ],
+    "name": "unregisterProvider",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

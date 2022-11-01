@@ -6,7 +6,7 @@ import de.gematik.kether.extensions.toHex
 import de.gematik.kether.rpc.Rpc
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.math.BigInteger
 
 /**

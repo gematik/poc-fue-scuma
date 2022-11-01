@@ -4,13 +4,14 @@ import de.gematik.kether.abi.types.AbiUint256
 import de.gematik.kether.abi.types.AbiUint8
 import de.gematik.kether.eth.Eth
 import de.gematik.kether.eth.types.Address
+import de.gematik.kether.eth.types.Quantity
 import de.gematik.kether.eth.types.Transaction
 import de.gematik.kether.rpc.Rpc
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
-import org.junit.AfterClass
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.math.BigInteger
 
 /**
@@ -24,22 +25,31 @@ class ScumaContractTests {
         val resourceOwnerId = Address("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73")
         val resourceOwnerPrivateKey = BigInteger("8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)
         val protectionAuthorizationId = Address("0xB389e2Ac92361c81481aFeF1cBF29881005996a3")
-        val protectionAuthorizationPrivateKey = BigInteger("64f2a57bccb23a83e3b8bd0755cc66bfb362f175a4996e066fd964497c504128", 16)
-        val scumaContractId = Address("0x7ef84473a4e772fb6adfa1b0c6728a3dbf268dd7")
+        val protectionAuthorizationPrivateKey =
+            BigInteger("64f2a57bccb23a83e3b8bd0755cc66bfb362f175a4996e066fd964497c504128", 16)
+        val scumaContractId = Address("0x4723d3adc915d1bf65c0834ce4cc21d2630cfd51")
         lateinit var scumaResourceOwner: ScumaContract
         lateinit var scumaResourceProvider: ScumaContract
 
-        @BeforeClass
+        @BeforeAll
         @JvmStatic
         fun scumaInit() {
             runBlocking {
                 val ethereum1 = Eth(Rpc("http://ethereum1.lab.gematik.de:8545", "ws://ethereum1.lab.gematik.de:8546"))
-                scumaResourceOwner = ScumaContract(ethereum1, Transaction(to = scumaContractId, from = resourceOwnerId), resourceOwnerPrivateKey)
-                scumaResourceProvider = ScumaContract(ethereum1, Transaction(to = scumaContractId, from = protectionAuthorizationId), protectionAuthorizationPrivateKey)
+                scumaResourceOwner = ScumaContract(
+                    ethereum1,
+                    Transaction(to = scumaContractId, from = resourceOwnerId),
+                    resourceOwnerPrivateKey
+                )
+                scumaResourceProvider = ScumaContract(
+                    ethereum1,
+                    Transaction(to = scumaContractId, from = protectionAuthorizationId),
+                    protectionAuthorizationPrivateKey
+                )
             }
         }
 
-        @AfterClass
+        @AfterAll
         @JvmStatic
         fun cancelScuma() {
             scumaResourceOwner.cancel()
@@ -49,53 +59,84 @@ class ScumaContractTests {
     @Test
     fun registerProvider() {
         runBlocking {
-            val receipt = scumaResourceOwner.RegisterProvider(protectionAuthorizationId)
-            assert(receipt.isSuccess)
+            scumaResourceOwner.run {
+                // unregister all providers
+                var receipt = unregisterAllProviders()
+                assert(receipt.isSuccess)
+                assert(getProviderCount() == Quantity(0))
+                // register new provider
+                receipt = registerProvider(protectionAuthorizationId)
+                assert(receipt.isSuccess)
+                assert(getProviderCount() == Quantity(1))
+                assert(getProviders()[0] == protectionAuthorizationId)
+                // clean up
+                unregisterAllProviders()
+                assert(receipt.isSuccess)
+                assert(getProviderCount() == Quantity(0))
+            }
         }
     }
 
     @Test
     fun registerResourceWrongProvider() {
         runBlocking {
-            scumaResourceOwner.run {
-                assert(runCatching { registerResource(AbiUint256(2)) }.isFailure)
-            }
+            scumaResourceOwner.unregisterAllProviders()
+            assert(runCatching { scumaResourceProvider.registerResource(AbiUint256(2)) }.isFailure)
         }
     }
 
     @Test
     fun registerResource() {
         runBlocking {
+            scumaResourceOwner.registerProvider(protectionAuthorizationId)
             scumaResourceProvider.run {
-                val receipt = registerResource(AbiUint256(2))
-                assert(receipt.isSuccess)
+                // unregister all resources
+                val receipt1 = unregisterAllResources()
+                assert(receipt1.isSuccess)
+                assert(getResourceCount() == Quantity(0))
+                //register new resource
+                val receipt2 = registerResource(AbiUint256(2))
+                assert(receipt2.isSuccess)
+                assert(getResourceCount() == Quantity(1))
+                assert(getResourceIds()[0] == AbiUint256(2))
+                // clean up
+                unregisterAllResources()
             }
+            scumaResourceOwner.unregisterAllProviders()
         }
     }
 
     @Test
     fun setPolicy() {
         runBlocking {
+            scumaResourceOwner.registerProvider(protectionAuthorizationId)
+            scumaResourceProvider.registerResource(AbiUint256(2))
             scumaResourceOwner.run {
                 val receipt = setRule(AbiUint256(2), protectionAuthorizationId, AbiUint8(1))
                 assert(receipt.isSuccess)
+                val policy = getPolicy(AbiUint256(2))
+                assert(policy.size == 1)
+                assert(policy[0].let{it.who == protectionAuthorizationId && it.how == AbiUint8(1)})
             }
+            scumaResourceProvider.unregisterAllResources()
+            scumaResourceOwner.unregisterAllProviders()
         }
     }
 
     @Test
     fun requestPermission() {
         runBlocking {
-            scumaResourceProvider.run {
-                val permissions = requestPermissions(
-                    protectionAuthorizationId,
-                    listOf(ScumaContract.PermissionRequest(protectedResourceId = AbiUint256(2), AbiUint8(1)))
-                )
-                println(permissions)
-                assert(permissions.size == 1)
-            }
+            scumaResourceOwner.registerProvider(protectionAuthorizationId)
+            scumaResourceProvider.registerResource(AbiUint256(2))
+            scumaResourceOwner.setRule(AbiUint256(2), protectionAuthorizationId, AbiUint8(1))
+            val permissions = scumaResourceProvider.requestPermissions(
+                protectionAuthorizationId,
+                listOf(ScumaContract.PermissionRequest(protectedResourceId = AbiUint256(2), AbiUint8(1)))
+            )
+            assert(permissions.size == 1)
+            assert(permissions[0].let{it.protectedResourceId == AbiUint256(2) && it.grantedMethod == AbiUint8(1)})
+            scumaResourceProvider.unregisterAllResources()
+            scumaResourceOwner.unregisterAllProviders()
         }
     }
-
-
 }
