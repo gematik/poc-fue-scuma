@@ -56,7 +56,8 @@ participant "Owner" as OWNER
 
 activate PROVIDER
 PROVIDER <-- OWNER : GET Resource(ResourceURL, OwnerId)
-PROVIDER -> OWNER : Authenticate(Challenge) : SignedChallenge
+PROVIDER --> OWNER : 401: WWW-authenticate = Challenge
+PROVIDER <-- OWNER : GET Resource(ResourceURL, OwnerId), Authorization = Credential
 PROVIDER --> OWNER : Resource
 deactivate PROVIDER
 PROVIDER <-- OWNER : ProtectResource(ResourceURL, OwnerId)
