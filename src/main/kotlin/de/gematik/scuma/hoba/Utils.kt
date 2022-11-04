@@ -18,7 +18,3 @@ internal fun String.toParameterMap(): Map<String, String> {
     return result
 }
 
-internal fun SECPPublicKey.toAccount(): AbiAddress {
-    return AbiAddress(encodedBytes.toArray().keccak().copyOfRange(12, 32))
-}
-

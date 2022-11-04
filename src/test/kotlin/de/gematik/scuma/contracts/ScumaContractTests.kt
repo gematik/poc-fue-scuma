@@ -2,6 +2,7 @@ package de.gematik.scuma.contracts
 
 import de.gematik.kether.abi.types.AbiUint256
 import de.gematik.kether.abi.types.AbiUint8
+import de.gematik.kether.crypto.AccountStore
 import de.gematik.kether.eth.Eth
 import de.gematik.kether.eth.types.Address
 import de.gematik.kether.eth.types.Quantity
@@ -12,7 +13,6 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.math.BigInteger
 
 /**
  * Created by rk on 02.08.2022.
@@ -22,12 +22,9 @@ import java.math.BigInteger
 class ScumaContractTests {
 
     companion object {
-        val resourceOwnerId = Address("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73")
-        val resourceOwnerPrivateKey = BigInteger("8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63", 16)
-        val protectionAuthorizationId = Address("0xB389e2Ac92361c81481aFeF1cBF29881005996a3")
-        val protectionAuthorizationPrivateKey =
-            BigInteger("64f2a57bccb23a83e3b8bd0755cc66bfb362f175a4996e066fd964497c504128", 16)
-        val scumaContractId = Address("0x4723d3adc915d1bf65c0834ce4cc21d2630cfd51")
+        val resourceOwnerId = AccountStore.getAccount(AccountStore.TEST_ACCOUNT_1).address
+        val protectionAuthorizationId = AccountStore.getAccount(AccountStore.TEST_ACCOUNT_4).address
+        val scumaContractId = Address("0x63491c5363329afb6f370e9d297025481e0277e6")
         lateinit var scumaResourceOwner: ScumaContract
         lateinit var scumaResourceProvider: ScumaContract
 
@@ -38,13 +35,11 @@ class ScumaContractTests {
                 val ethereum1 = Eth(Rpc("http://ethereum1.lab.gematik.de:8545", "ws://ethereum1.lab.gematik.de:8546"))
                 scumaResourceOwner = ScumaContract(
                     ethereum1,
-                    Transaction(to = scumaContractId, from = resourceOwnerId),
-                    resourceOwnerPrivateKey
+                    Transaction(to = scumaContractId, from = resourceOwnerId)
                 )
                 scumaResourceProvider = ScumaContract(
                     ethereum1,
-                    Transaction(to = scumaContractId, from = protectionAuthorizationId),
-                    protectionAuthorizationPrivateKey
+                    Transaction(to = scumaContractId, from = protectionAuthorizationId)
                 )
             }
         }

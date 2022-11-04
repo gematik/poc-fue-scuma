@@ -2,6 +2,7 @@ package de.gematik.scuma.hoba
 
 import de.gematik.kether.abi.types.AbiAddress
 import de.gematik.kether.extensions.keccak
+import de.gematik.kether.extensions.toAccount
 import org.apache.tuweni.bytes.Bytes
 import org.apache.tuweni.bytes.Bytes32
 import org.bouncycastle.asn1.sec.SECNamedCurves
