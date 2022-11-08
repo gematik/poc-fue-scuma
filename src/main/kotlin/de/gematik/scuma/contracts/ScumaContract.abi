@@ -44,9 +44,9 @@
             "type": "address"
           },
           {
-            "internalType": "enum ScumaContract.AccessMethod",
+            "internalType": "uint256",
             "name": "how",
-            "type": "uint8"
+            "type": "uint256"
           }
         ],
         "internalType": "struct ScumaContract.Rule[]",
@@ -158,9 +158,9 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum ScumaContract.AccessMethod",
-            "name": "requestedMethod",
-            "type": "uint8"
+            "internalType": "uint256",
+            "name": "requestedMethods",
+            "type": "uint256"
           }
         ],
         "internalType": "struct ScumaContract.PermissionRequest[]",
@@ -180,9 +180,9 @@
             "type": "uint256"
           },
           {
-            "internalType": "enum ScumaContract.AccessMethod",
-            "name": "grantedMethod",
-            "type": "uint8"
+            "internalType": "uint256",
+            "name": "grantedMethods",
+            "type": "uint256"
           }
         ],
         "internalType": "struct ScumaContract.Permission[]",
@@ -207,9 +207,9 @@
         "type": "address"
       },
       {
-        "internalType": "enum ScumaContract.AccessMethod",
-        "name": "method",
-        "type": "uint8"
+        "internalType": "uint256",
+        "name": "methods",
+        "type": "uint256"
       }
     ],
     "name": "setRule",

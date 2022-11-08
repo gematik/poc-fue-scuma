@@ -2,6 +2,7 @@ package de.gematik.scuma.apis
 
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
+import java.util.*
 
 
 /**
@@ -9,6 +10,16 @@ import org.junit.jupiter.api.Test
  * gematik.de
  */
 class ControlApiTests {
+
+    @Test
+    fun getProviderCount() {
+        println(controlApi.getProviderCount())
+    }
+
+    @Test
+    fun getProviders() {
+        println(controlApi.getProviders())
+    }
 
     @Test
     fun registerProvider() {
@@ -20,7 +31,13 @@ class ControlApiTests {
     @Test
     fun setRule() {
         runBlocking {
-            assert(controlApi.setRule(testResource, userId, AccessMethod.READ))
+            assert(
+                controlApi.setRule(
+                    testResource,
+                    userId,
+                    BitSet().apply { set(CRUD_READ); set(CRUD_UPDATE) }
+                )
+            )
         }
     }
 
@@ -34,16 +51,6 @@ class ControlApiTests {
         runBlocking {
             assert(controlApi.deleteRule(testResource, 0))
         }
-    }
-
-    @Test
-    fun getProviderCount() {
-        println(controlApi.getProviderCount())
-    }
-
-    @Test
-    fun getProviders() {
-        println(controlApi.getProviders())
     }
 
     @Test

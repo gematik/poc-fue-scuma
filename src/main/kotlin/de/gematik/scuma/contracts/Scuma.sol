@@ -18,19 +18,17 @@ contract ScumaContract {
 
     struct Rule {
         address who;  // userId
-        AccessMethod how;
+        uint256 how;  // bit set representing the defined access methods; methods defined by application
     }
-
-    enum AccessMethod {Create, Read, Update, Delete}
 
     struct Permission {
         uint256 protectedResourceId;
-        AccessMethod grantedMethod;
+        uint256 grantedMethods; // bit set representing the granted access methods; methods defined by application
     }
 
     struct PermissionRequest {
         uint256 protectedResourceId;
-        AccessMethod requestedMethod;
+        uint256 requestedMethods; // bit set representing the requested access methods; methods defined by application
     }
 
     constructor () {
@@ -69,9 +67,9 @@ contract ScumaContract {
     }
 
     function getProviders() public onlyOwner view returns (address[] memory){
-        address[] memory providerIds = new address[](protectionAuthorizationIds.length-1);
+        address[] memory providerIds = new address[](protectionAuthorizationIds.length - 1);
         for (uint i = 1; i < protectionAuthorizationIds.length; i++) {
-            providerIds[i-1] = protectionAuthorizationIds[i];
+            providerIds[i - 1] = protectionAuthorizationIds[i];
         }
         return providerIds;
     }
@@ -103,13 +101,13 @@ contract ScumaContract {
     }
 
     function getResourceCount() public onlyAuthorizedProviders view returns (uint256){
-        return policies.length-1;
+        return policies.length - 1;
     }
 
     function getResourceIds() public onlyAuthorizedProviders view returns (uint256[] memory){
-        uint256[] memory resourceIds = new uint256[](policies.length-1);
+        uint256[] memory resourceIds = new uint256[](policies.length - 1);
         for (uint i = 1; i < policies.length; i++) {
-            resourceIds[i-1] = policies[i].what;
+            resourceIds[i - 1] = policies[i].what;
         }
         return resourceIds;
     }
@@ -123,11 +121,10 @@ contract ScumaContract {
         delete ruleLists;
     }
 
-    function setRule(uint256 protectedResourceId, address userId, AccessMethod method) public onlyOwner {
-        uint index = policyIndices[protectedResourceId];
-        if (index > 0) {// protected resource id exists
-            policies[index].ruleList.push(Rule(userId, method));
-        }
+    function setRule(uint256 protectedResourceId, address userId, uint256 methods) public onlyOwner {
+        uint policyIndex = policyIndices[protectedResourceId];
+        require(policyIndex > 0, 'protected resource does not exist');
+        policies[policyIndex].ruleList.push(Rule(userId, methods));
     }
 
     function getPolicy(uint256 protectedResourceId) public onlyOwner view returns (Rule[] memory){
@@ -155,7 +152,7 @@ contract ScumaContract {
                 Policy storage policy = policies[policyIndex];
                 for (uint j = 0; j < policy.ruleList.length; j++) {
                     Rule memory rule = policy.ruleList[j];
-                    if (rule.who == userId && rule.how == permissionRequest.requestedMethod) {
+                    if (rule.who == userId && (rule.how & permissionRequest.requestedMethods != 0)) {
                         count++;
                     }
                 }
@@ -171,8 +168,8 @@ contract ScumaContract {
                 Policy storage policy = policies[policyIndex];
                 for (uint j = 0; j < policy.ruleList.length; j++) {
                     Rule memory rule = policy.ruleList[j];
-                    if (rule.who == userId && rule.how == permissionRequest.requestedMethod) {
-                        permissions[count++] = Permission(permissionRequest.protectedResourceId, rule.how);
+                    if (rule.who == userId && (rule.how & permissionRequest.requestedMethods != 0)) {
+                        permissions[count++] = Permission(permissionRequest.protectedResourceId, rule.how & permissionRequest.requestedMethods);
                     }
                 }
             }

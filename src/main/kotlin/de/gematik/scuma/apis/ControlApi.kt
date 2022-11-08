@@ -1,5 +1,6 @@
 package de.gematik.scuma.apis
 
+import de.gematik.kether.abi.types.AbiUint256
 import de.gematik.kether.abi.types.AbiUint8
 import de.gematik.kether.eth.Eth
 import de.gematik.kether.eth.types.Address
@@ -36,8 +37,8 @@ class ControlApi(contractId: Address, resourceOwnerId: Address, rpc: Rpc) {
         return contract.unregisterProvider(protectionAuthorizationId).isSuccess
     }
 
-    suspend fun setRule(protectedResourceId: UUID, userId: Address, method: AccessMethod) : Boolean {
-        return contract.setRule(protectedResourceId.toQuantity(), userId, AbiUint8(method.ordinal.toLong())).isSuccess
+    suspend fun setRule(protectedResourceId: UUID, userId: Address, methods: BitSet) : Boolean {
+        return contract.setRule(protectedResourceId.toQuantity(), userId, AbiUint256(methods.toLong())).isSuccess
     }
 
     suspend fun deleteRule(protectedResourceId: UUID, index: Int): Boolean {
@@ -45,7 +46,7 @@ class ControlApi(contractId: Address, resourceOwnerId: Address, rpc: Rpc) {
     }
 
     fun getPolicy(protectedResourceId: UUID): List<Rule> {
-        return contract.getPolicy(protectedResourceId.toQuantity()).map {Rule(it.who, AccessMethod.values()[it.how.toBigInteger().toInt()])}
+        return contract.getPolicy(protectedResourceId.toQuantity()).map {Rule(it.who, it.how.toBigInteger().toLong().toBitSet())}
     }
 }
 

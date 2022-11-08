@@ -28,7 +28,7 @@ class ProtectionApi(contractId: Address, resourceOwnerId: Address, rpc: Rpc) {
     }
 
     fun requestPermissions(userId: Address, permissionRequests: List<PermissionRequest>): List<Permission> {
-        return contract.requestPermissions(userId, permissionRequests.map { ScumaContract.PermissionRequest(it.protectedResourceId.toQuantity(), Quantity(it.requestedMethod.ordinal.toLong()))}).map{ Permission(it.protectedResourceId.toUUID(), AccessMethod.values()[it.grantedMethod.toBigInteger().toInt()]) }
+        return contract.requestPermissions(userId, permissionRequests.map { ScumaContract.PermissionRequest(it.protectedResourceId.toQuantity(), Quantity(it.requestedMethods.toLong()))}).map{ Permission(it.protectedResourceId.toUUID(), it.grantedMethods.toBigInteger().toLong().toBitSet()) }
     }
 
     suspend fun unregisterAllResources(): Boolean {

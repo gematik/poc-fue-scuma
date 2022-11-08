@@ -55,7 +55,7 @@ class ProtectionApiTests {
         println(
             protectionApi.requestPermissions(
                 userId,
-                listOf(PermissionRequest(testResource, AccessMethod.READ))
+                listOf(PermissionRequest(testResource, BitSet().apply { set(CRUD_READ) }))
             )
         )
     }

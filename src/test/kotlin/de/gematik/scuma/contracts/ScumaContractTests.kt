@@ -1,7 +1,6 @@
 package de.gematik.scuma.contracts
 
 import de.gematik.kether.abi.types.AbiUint256
-import de.gematik.kether.abi.types.AbiUint8
 import de.gematik.kether.crypto.AccountStore
 import de.gematik.kether.eth.Eth
 import de.gematik.kether.eth.types.Address
@@ -24,7 +23,7 @@ class ScumaContractTests {
     companion object {
         val resourceOwnerId = AccountStore.getAccount(AccountStore.TEST_ACCOUNT_1).address
         val protectionAuthorizationId = AccountStore.getAccount(AccountStore.TEST_ACCOUNT_4).address
-        val scumaContractId = Address("0x63491c5363329afb6f370e9d297025481e0277e6")
+        val scumaContractId = Address("0xddff69f60b480ab37dd79a2b93e4298fcefaf8de")
         lateinit var scumaResourceOwner: ScumaContract
         lateinit var scumaResourceProvider: ScumaContract
 
@@ -107,11 +106,11 @@ class ScumaContractTests {
             scumaResourceOwner.registerProvider(protectionAuthorizationId)
             scumaResourceProvider.registerResource(AbiUint256(2))
             scumaResourceOwner.run {
-                val receipt = setRule(AbiUint256(2), protectionAuthorizationId, AbiUint8(1))
+                val receipt = setRule(AbiUint256(2), protectionAuthorizationId, AbiUint256(1))
                 assert(receipt.isSuccess)
                 val policy = getPolicy(AbiUint256(2))
                 assert(policy.size == 1)
-                assert(policy[0].let{it.who == protectionAuthorizationId && it.how == AbiUint8(1)})
+                assert(policy[0].let{it.who == protectionAuthorizationId && it.how == AbiUint256(1)})
             }
             scumaResourceProvider.unregisterAllResources()
             scumaResourceOwner.unregisterAllProviders()
@@ -123,13 +122,13 @@ class ScumaContractTests {
         runBlocking {
             scumaResourceOwner.registerProvider(protectionAuthorizationId)
             scumaResourceProvider.registerResource(AbiUint256(2))
-            scumaResourceOwner.setRule(AbiUint256(2), protectionAuthorizationId, AbiUint8(1))
+            scumaResourceOwner.setRule(AbiUint256(2), protectionAuthorizationId, AbiUint256(1))
             val permissions = scumaResourceProvider.requestPermissions(
                 protectionAuthorizationId,
-                listOf(ScumaContract.PermissionRequest(protectedResourceId = AbiUint256(2), AbiUint8(1)))
+                listOf(ScumaContract.PermissionRequest(protectedResourceId = AbiUint256(2), AbiUint256(1)))
             )
             assert(permissions.size == 1)
-            assert(permissions[0].let{it.protectedResourceId == AbiUint256(2) && it.grantedMethod == AbiUint8(1)})
+            assert(permissions[0].let{it.protectedResourceId == AbiUint256(2) && it.grantedMethods == AbiUint256(1)})
             scumaResourceProvider.unregisterAllResources()
             scumaResourceOwner.unregisterAllProviders()
         }
