@@ -1,5 +1,6 @@
 = SCUMA - Smart Contract based User Managed Access
 :toc:
+:toclevels: 4
 :icons: font
 :source-highlighter: rouge
 
@@ -113,86 +114,133 @@ USER <-- PROVIDER : Resources
 
 @enduml
 ----
+== Usage
 
-== Smart contract
+There are three API supported by the scuma library:
 
-[source,solidity]
+* Management API between resource owner and resource provider
+* Control API between resource owner and SCUMA
+* Protection API between resource provider and SCUMA
+
+The Management API should be implemented according to the API used to access the resoures. The the scuma library only provides support function for EOA based authentication of the resource owner. The actual implementation of the Management API is out of scope of this specification.
+
+The Control and Protection API uses the Ethereum JSON RPC protocol to interact with Ethereum clients and the smart contracts hosted on the Ethereum. The scuma library hides the complexity of the Ethereum JSON RPC protocol and allows to interact with the scuma contract by an interface purely defined in kotlin.
+
+=== Management API
+The management API is the interface between the resource owner and the resource provider. It is mainly defined by the capabilities of the resource provider. In case of FHIR the resource server provides a REST interface https://www.hl7.org/fhir/http.html[HL7 - FHIR] to provide access to medical resources.
+Further, the resource owner uses this interface to request protection of accessed resources and to get information about protected resources (e.g. the protected resource id). In order to make sure that this interface is only used by the resource owner, the resource owner needs to be authenticated by the resource server.
+
+==== HTTP Origin-Bound Authentication (HOBA)
+HTTP Origin-Bound Authentication (HOBA) https://www.rfc-editor.org/rfc/rfc7486.html[RFC7486] is a digital-signature-based design for an HTTP authentication method. HOBA is specified to use RSA signature but allows registration of other signature schemes. HOBA was extented to use SECP2561K1 signatures. This extension allows the resource owner to authenticate against the server provides by using his external owned address and the corresponding private key.
+
+. The resource owner connectes to the resource server and makes a FHIR request:
++
+[source, http]
 ----
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+GET /resource HTTP/1.1
+HOST: resourceserver.com
+----
 
-contract ScumaContract {
+. The server rejects the request with status code 401 and includes a challenge in the WWW-Authenticate header:
++
+[source, http]
+----
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: HOBA challenge="MPl_cQSW5Aa40kGGo6haUsm4Kkzs7pQ8t4are0mzD9s=" max-age=10 realm="scuma"
+----
++
+* ``challenge`` is a base64url-encoded challenge value that the server chose to send to the client. The challenge is chosen so that it is infeasible to guess and is derived from a random byte string of 32 bytes (256 bits).
++
+* ``max-age`` specifies the number
+of seconds from the time the HTTP response is emitted for which responses to this challenge can be accepted; for example, "max-age: 10" would indicate ten seconds. If max-age is set to zero, then that means that only one signature will be accepted for this challenge.
+* ``realm`` indicates the scope of protection in the manner described in https://www.rfc-editor.org/rfc/rfc7235[RFC7235]. The ``realm`` attribute MUST NOT appear more than once.
 
-    address Owner;
+. The resource owner signs the challenge https://www.rfc-editor.org/rfc/rfc7486.html#section-2[RFC7486-section2] and repeats the original request with an Authorization header containing the signed challenge https://www.rfc-editor.org/rfc/rfc7486.html#section-3[RFC7486-section3] :
++
+[source, http]
+----
+GET /resource HTTP/1.1
+HOST: resourceserver.com
+Authorization: HOBA result="0xfe3b557e8fb62b89f4916b721be55ceb828db
+d73.eNIv3lOevIwjzuyrxGkliYnyAXUUuNC_oQZqplhO6rwp555smaglDfbHCroJdNG
+K9eqFgcVy4dL89nKC18hPk=.OncuAM2XAKi97RdjL7JgImdZ4a2FmCZSWgULpXF0q_B
+YAyALY35DlJGSiZjMb-2oDvvIcuh7teYJ4j2xXFikPAA="
+----
++
+* ``result`` is a dot-separated string that includes kid, challenge, nonce and signature:  ``kid + '.' + challenge + '.' + nonce +'.' + sig``
+** ``kid`` key identifier. EOA of the resource owner
+** ``challenge`` challenge as received in the WWW-Authentication header
+** ``nonce`` a random value chosen by the resource owner derived from a random byte string of 32 byte length
 
-    address[] protectionAuthorizationIds;
-    mapping(address => uint) protectionAuthorizationIdIndices;
-    Policy[] policies;
-    Rule[][] ruleLists;
-    mapping(uint256 => uint) policyIndices; // protectedResourceId to policy index
+. The resource server verifies the credential received in the Authorization header by verifying the signature using the received parameters and additional context information https://www.rfc-editor.org/rfc/rfc7486.html#section-2[RFC7486-section2]. Further it checks that the response was received within the specified ``max-age``.
 
-    struct Policy {
-        uint256 what;  // protected resource id
-        Rule[] ruleList;
-    }
+. After successful authentication the server returns the requested resource. The response shall include a session cookie that allows the client to indicate its authentication state in future
+requests - https://www.rfc-editor.org/rfc/rfc6265[HTTP State Management Mechanism - RFC6265] .
 
-    struct Rule {
-        address who;  // userId
-        AccessMethod how;
-    }
+===== Server side usage of library
 
-    enum AccessMethod {Create, Read, Update, Delete}
+The server uses the class ``HobaAuthenticationChallenge to create the Hoba challenge and sends the challenge in the WWW-Authententication header in a 401 response:
+[source, kotlin]
+----
+// challenge is 256bit random
+val challenge = Random.nextBytes(32)
+// realm defines the context
+// max-age requests the client to answer within the next 10s
+val hobaAuthenticationChallenge = HobaAuthenticationChallenge(
+    maxAge = 10,
+    realm = "scuma",
+    challenge = challenge
+)
+val wwwAuthenticationContent = hobaAuthenticationChallenge.toString()
+----
 
-    struct Permission {
-        uint256 protectedResourceId;
-        AccessMethod grantedMethod;
-    }
+The clients signs the challenge, repeats the original request with an authorization header which is contains the signed challenge. The server receives the request and verifies the authorization header:
+[source, kotlin]
+----
+val hobaAuthorizationCedential = HobaAuthorizationCedential.fromString(authorizationHeaderContent)
+// In order to verify the signature the server has to hand over its orgin as specified in its server certificate and the predefined realm used in the challenge.
+assert(hobaAuthorizationCedential.verify(
+        origin = origin,
+        realm = "scuma"
+    )
+)
+----
 
-    struct PermissionRequest {
-        uint256 protectedResourceId;
-        AccessMethod requestedMethod;
-    }
+===== Client side usage of library
 
-    constructor ()
-
-    modifier onlyOwner()
-
-    modifier onlyAuthorizedProviders()
-
-    function registerProvider(address protectionAuthorizationId) public onlyOwner
-
-    function unregisterProvider(address protectionAuthorizationId) public onlyOwner
-
-    function getProviderCount() public onlyOwner view returns (uint256)
-
-    function getProviders() public onlyOwner view returns (address[] memory)
-
-    function unregisterAllProviders() public onlyOwner
-
-    function registerResource(uint256 protectedResourceId) public onlyAuthorizedProviders
-
-    function unregisterResource(uint256 protectedResourceId) public onlyAuthorizedProviders
-
-    function getResourceCount() public onlyAuthorizedProviders view returns (uint256)
-
-    function getResourceIds() public onlyAuthorizedProviders view returns (uint256[] memory)
-
-    function unregisterAllResources() public onlyAuthorizedProviders
-
-    function setRule(uint256 protectedResourceId, address userId, AccessMethod method) public onlyOwner
-
-    function getPolicy(uint256 protectedResourceId) public onlyOwner view returns (Rule[] memory)
-
-    function deleteRule(uint256 protectedResourceId, uint index) public onlyOwner
-
-    function requestPermissions(address userId, PermissionRequest[] calldata permissionRequests) public onlyAuthorizedProviders view returns (Permission[] memory)
+The client receives the challenge from the server in the WWW-Authententication header of a 401 response and repeats the rejected request with an authorization header which contains the signed challenge as credential:
+[source, kotlin]
+----
+// nonce is 256bit random
+val nonce = Random.nextBytes(32)
+val hobaAuthorizationChallenge = HobaAuthenticationChallenge.fromString(wwwAuthenticationHeaderContent)
+// In order to create the credential the client takes the challenge from the received hoba authentication challenge and an randomly choosen nonce.
+val hobaAuthorizationCedential = hobaAuthorizationCedential(
+    challenge = hobaAuthorizationChallenge.challenge,
+    nonce = nonce
+).apply{
+// The client signs the challenge using his private key and the origin of the server taken from the server certificate.
+    sign(privateKey, origin)
 }
+val authorizationHeaderContent = hobaAuthorizationCedential.toString()
 ----
+The scuma library has extended the HOBA RFC by a new signature algorithm. Instead of the defined RSA algorithms the scuma library uses SECP256K1. That is the crypto algorithm used by the Ethereum. So the cryptographic keys bound to the EOA of the resource owner can be used for authentication.
 
-== TODO's
+==== Management of protected resources
+
+A detailed description of the protocol for the management of protected resources is out of scope of this specification. The actual implementation of the protocol messages should be choosen in a way that fits best to the access protocol of the managed resources. In case of FHIR a REST-API needs to be defined to request and cancel protection and to get information about protected resources.
+
+=== Control API
+
+=== Protection API
+
+== Open issues
 
 * DID instead of EOA
-* attribute based access control or groups (e.g. merkle proofs ...)
-* privacy aware policies
+* attribute based access control or groups (e.g. https://blog.blockstream.com/en-treesignatures/#h.wbxhn6ukemzf[1-of-N tree signatures])
+* privacy aware policies (e.g. https://github.com/eth-sri/zkay[zkay: A Language for Private Smart Contracts on Ethereum])
+* device binding of EOA using hardware-backed SECP256 keys
+
+
 
 
