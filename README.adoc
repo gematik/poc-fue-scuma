@@ -108,9 +108,9 @@ USER --> PROVIDER : GET ResourceURL Authorization: Credential
 PROVIDER -> PROVIDER: Verifies Credential
 PROVIDER -> PROVIDER : Maps resource request onto ProtectedResourceIds
 activate SC
-PROVIDER --> SC : RequestsPermissions(listOf(PermissionRequest(protectedResourceID, requestedMethods)), userId)
+PROVIDER --> SC : RequestsPermissions(\n   listOf(PermissionRequest(protectedResourceID, requestedMethods)),\n   userId\n)
 SC->SC : CheckProtectionAuthorization(ProtectionAuthorizationId) : Boolean
-SC->SC : CheckAccessRules(listOf(PermissionRequest(protectedResourceID, requestedMethods)), userId):\n listOf(Permission(protectedResourceID, grantedMethods))
+SC->SC : CheckAccessRules(\n   listOf(PermissionRequest(protectedResourceID, requestedMethods)),\n   userId\n) : listOf(Permission(protectedResourceID, grantedMethods))
 PROVIDER <-- SC : listOf(Permission(protectedResourceID, grantedMethods))
 deactivate SC
 PROVIDER->PROVIDER : EnforcePermissions
@@ -120,24 +120,25 @@ USER <-- PROVIDER : 200 Resources Coookie: SessionCookie
 ----
 == Usage
 
-There are three API supported by the scuma library:
+There are four API supported by the scuma library:
 
 * Management API between resource owner and resource provider
+* Access API between user and resource provider
 * Control API between resource owner and SCUMA
 * Protection API between resource provider and SCUMA
 
-The Management API should be implemented according to the API used to access the resoures. The scuma library only provides support functions for EOA based authentication of the resource owner. The actual implementation of the Management API is out of scope of this specification.
+The Management API and the Access API should be implemented according to the API used to access the resoures. The scuma library only provides support functions for EOA based authentication of the resource owner. The actual implementations of the Management API and the Access API are out of scope of this specification.
 
 The Control and Protection API uses the Ethereum JSON RPC protocol to interact with Ethereum clients and the smart contracts hosted on the Ethereum block chain. The scuma library hides the complexity of the Ethereum JSON RPC protocol and allows to interact with the scuma contract by an interface entirely defined in kotlin.
 
-=== Management API
-The management API is the interface between the resource owner and the resource provider. It is mainly defined by the capabilities of the resource provider. In case of FHIR the resource server provides a REST interface https://www.hl7.org/fhir/http.html[HL7 - FHIR] to provide access to medical resources.
-Further, the resource owner uses this interface to request protection of accessed resources and to get information about protected resources (e.g. the protected resource id). In order to make sure that this interface is only used by the resource owner, the resource owner needs to be authenticated by the resource server.
+=== User APIs (Access API and Management API)
+The User APIs are the interface between the users (resource owner and resource user) and the resource provider. They are mainly defined by the capabilities of the resource provider. In case of FHIR the resource server provides a REST interface https://www.hl7.org/fhir/http.html[HL7 - FHIR] to provide access to medical resources.
+Further, the resource owner uses the Management API to request protection of accessed resources and to get information about protected resources (e.g. the protected resource id). In order to make sure that these interfaces are only used by the authorized users, the users need to be authenticated by the resource server.
 
 ==== HTTP Origin-Bound Authentication (HOBA)
-HTTP Origin-Bound Authentication (HOBA) https://www.rfc-editor.org/rfc/rfc7486.html[RFC7486] is a digital-signature-based design for an HTTP authentication method. HOBA is specified to use RSA signature but allows registration of other signature schemes. HOBA was extented to use SECP2561K1 signatures. This extension allows the resource owner to authenticate against the server provides by using his external owned address and the corresponding private key.
+HTTP Origin-Bound Authentication (HOBA) https://www.rfc-editor.org/rfc/rfc7486.html[RFC7486] is a digital-signature-based design for an HTTP authentication method. HOBA is specified to use RSA signature but allows registration of other signature schemes. HOBA was extented to use SECP2561K1 signatures. This extension allows the user to authenticate against the server provides by using his external owned address and the corresponding private key.
 
-. The resource owner connectes to the resource server and makes a FHIR request:
+. The user connects to the resource server and makes a FHIR request:
 +
 [source, http]
 ----
@@ -159,7 +160,7 @@ WWW-Authenticate: HOBA challenge="MPl_cQSW5Aa40kGGo6haUsm4Kkzs7pQ8t4are0mzD9s=" 
 of seconds from the time the HTTP response is emitted for which responses to this challenge can be accepted; for example, "max-age: 10" would indicate ten seconds. If max-age is set to zero, then that means that only one signature will be accepted for this challenge.
 * ``realm`` indicates the scope of protection in the manner described in https://www.rfc-editor.org/rfc/rfc7235[RFC7235]. The ``realm`` attribute MUST NOT appear more than once.
 
-. The resource owner signs the challenge https://www.rfc-editor.org/rfc/rfc7486.html#section-2[RFC7486-section2] and repeats the original request with an Authorization header containing the signed challenge https://www.rfc-editor.org/rfc/rfc7486.html#section-3[RFC7486-section3] :
+. The user signs the challenge https://www.rfc-editor.org/rfc/rfc7486.html#section-2[RFC7486-section2] and repeats the original request with an Authorization header containing the signed challenge https://www.rfc-editor.org/rfc/rfc7486.html#section-3[RFC7486-section3] :
 +
 [source, http]
 ----
@@ -178,7 +179,7 @@ YAyALY35DlJGSiZjMb-2oDvvIcuh7teYJ4j2xXFikPAA="
 
 . The resource server verifies the credential received in the Authorization header by verifying the signature using the received parameters and additional context information https://www.rfc-editor.org/rfc/rfc7486.html#section-2[RFC7486-section2]. Further it checks that the response was received within the specified ``max-age``.
 
-. After successful authentication the server returns the requested resource. The response shall include a session cookie that allows the client to indicate its authentication state in future
+. After successful authentication the server returns the requested resource. The response shall include a session cookie that allows the user client to indicate its authentication state in future
 requests - https://www.rfc-editor.org/rfc/rfc6265[HTTP State Management Mechanism - RFC6265] .
 
 ===== Server side usage of library
@@ -198,7 +199,7 @@ val hobaAuthenticationChallenge = HobaAuthenticationChallenge(
 val wwwAuthenticationContent = hobaAuthenticationChallenge.toString()
 ----
 
-The clients signs the challenge, repeats the original request with an authorization header which is contains the signed challenge. The server receives the request and verifies the authorization header:
+The user client signs the challenge, repeats the original request with an authorization header which contains the signed challenge. The server receives the request and verifies the authorization header:
 [source, kotlin]
 ----
 val hobaAuthorizationCedential = HobaAuthorizationCedential.fromString(authorizationHeaderContent)
@@ -228,11 +229,11 @@ val hobaAuthorizationCedential = hobaAuthorizationCedential(
 }
 val authorizationHeaderContent = hobaAuthorizationCedential.toString()
 ----
-The scuma library has extended the HOBA RFC by a new signature algorithm. Instead of the defined RSA algorithms the scuma library uses SECP256K1. That is the crypto algorithm used by the Ethereum. So the cryptographic keys bound to the EOA of the resource owner can be used for authentication.
+The scuma library has extended the HOBA RFC by a new signature algorithm. Instead of the defined RSA algorithms the scuma library uses SECP256K1. That is the crypto algorithm used by the Ethereum. So the cryptographic keys bound to the EOAs of the users can be used for authentication.
 
 ==== Management of protected resources
 
-A detailed description of the protocol for the management of protected resources is out of scope of this specification. The actual implementation of the protocol messages should be choosen in a way that fits best to the access protocol of the managed resources. In case of FHIR a REST-API needs to be defined to request and cancel protection and to get information about protected resources.
+A detailed description of the protocol for the management of protected resources is out of scope of this specification. The actual implementation of the protocol messages should be choosen in a way that fits best to the access protocol of the managed resources. E.g. in case of FHIR a REST-API is defined to request and cancel protection and to get information about protected resources.
 
 === Control API
 
