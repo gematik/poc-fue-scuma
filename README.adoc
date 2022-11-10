@@ -56,22 +56,24 @@ participant "SCUMA" as SC
 participant "Owner" as OWNER
 
 activate PROVIDER
-PROVIDER <-- OWNER : GET Resource(ResourceURL, OwnerId)
-PROVIDER --> OWNER : 401: WWW-authenticate = Challenge
-PROVIDER <-- OWNER : GET Resource(ResourceURL, OwnerId), Authorization = Credential
-PROVIDER --> OWNER : 200: Resource
+PROVIDER <-- OWNER : GET ResourceURL
+PROVIDER --> OWNER : 401 WWW-authenticate: Challenge
+PROVIDER <-- OWNER : GET ResourceURL Authorization: Credential
+PROVIDER -> PROVIDER: Verifies Credential
+PROVIDER --> OWNER : 200 Resource Set-Cookie: SessionCookie
 deactivate PROVIDER
-PROVIDER <-- OWNER : ProtectResource(ResourceURL, OwnerId)
+PROVIDER <-- OWNER : POST ProtectResource(ResourceURL) Cookie: SessionCookie
 activate PROVIDER
 opt Protection Authorization not yet available
-PROVIDER -> PROVIDER : Generate ProtectAuthorizationId
-PROVIDER --> OWNER : RequestProtectionAuthorization(ProtectionAuthorizationId)
+PROVIDER -> PROVIDER : Generate ProtectionAuthorizationId
+PROVIDER --> OWNER : 302 RequestProtectionAuthorization(ProtectionAuthorizationId)
 activate OWNER
 SC <- OWNER : RegisterProvider(ProtectionAuthorizationId) : Boolean
-PROVIDER <-- OWNER : ContractId
+PROVIDER <-- OWNER : POST ContractId
 deactivate OWNER
 PROVIDER -> PROVIDER : Store Mapping Owner -> ContractId, ProtectionAuthorizationId
 end
+PROVIDER -> PROVIDER : Generate ProtectedResourceId
 PROVIDER --> SC : RegisterResource(ProtectionAuthorizationId, ProtectedResourceId)
 activate SC
 SC->SC : CheckProtectionAuthorization : Boolean
@@ -79,9 +81,9 @@ SC->SC : RegisterId : Boolean
 PROVIDER <-- SC : Success
 deactivate SC
 PROVIDER -> PROVIDER : Store Mapping ResourceURL -> ProtectedResourceId
-PROVIDER --> OWNER : ProtectedResourceId
+PROVIDER --> OWNER : 200 ProtectedResourceId
 deactivate PROVIDER
-SC <- OWNER : SetPolicy(Policy(ProtectedResourceId, UserID, Method), OwnerId) : Boolean
+SC <- OWNER : SetRule(ProtectedResourceId, UserID, Methods) : Boolean
 @enduml
 ----
 
@@ -100,17 +102,19 @@ participant "Resource Provider" as PROVIDER
 participant "SCUMA" as SC
 
 activate PROVIDER
-USER --> PROVIDER : GET Resource(ResourceURL, UserId)
+USER --> PROVIDER : GET ResourceURL
+USER <-- PROVIDER : 401 WWW-authenticate: Challenge
+USER --> PROVIDER : GET ResourceURL Authorization: Credential
+PROVIDER -> PROVIDER: Verifies Credential
 PROVIDER -> PROVIDER : Maps resource request onto ProtectedResourceIds
-USER <- PROVIDER : Authenticate(Challenge) : SignedChallenge
 activate SC
-PROVIDER --> SC : RequestsPermissions((ProtectionAuthorizationId,\n listOf(PermissionRequest(ProtectedResourceID,\n Method)), userId)
+PROVIDER --> SC : RequestsPermissions(listOf(PermissionRequest(protectedResourceID, requestedMethods)), userId)
 SC->SC : CheckProtectionAuthorization(ProtectionAuthorizationId) : Boolean
-SC->SC : CheckPolicies(listOf(PermissionRequest(ProtectedResourceID, Method)),\n userId) : listOf(Permission(ProtectedResourceID, Method))
-PROVIDER <-- SC : listOf(Permission(ProtectedResourceID, Method))
+SC->SC : CheckAccessRules(listOf(PermissionRequest(protectedResourceID, requestedMethods)), userId):\n listOf(Permission(protectedResourceID, grantedMethods))
+PROVIDER <-- SC : listOf(Permission(protectedResourceID, grantedMethods))
 deactivate SC
 PROVIDER->PROVIDER : EnforcePermissions
-USER <-- PROVIDER : Resources
+USER <-- PROVIDER : 200 Resources Coookie: SessionCookie
 
 @enduml
 ----
@@ -122,9 +126,9 @@ There are three API supported by the scuma library:
 * Control API between resource owner and SCUMA
 * Protection API between resource provider and SCUMA
 
-The Management API should be implemented according to the API used to access the resoures. The the scuma library only provides support function for EOA based authentication of the resource owner. The actual implementation of the Management API is out of scope of this specification.
+The Management API should be implemented according to the API used to access the resoures. The scuma library only provides support functions for EOA based authentication of the resource owner. The actual implementation of the Management API is out of scope of this specification.
 
-The Control and Protection API uses the Ethereum JSON RPC protocol to interact with Ethereum clients and the smart contracts hosted on the Ethereum. The scuma library hides the complexity of the Ethereum JSON RPC protocol and allows to interact with the scuma contract by an interface purely defined in kotlin.
+The Control and Protection API uses the Ethereum JSON RPC protocol to interact with Ethereum clients and the smart contracts hosted on the Ethereum block chain. The scuma library hides the complexity of the Ethereum JSON RPC protocol and allows to interact with the scuma contract by an interface entirely defined in kotlin.
 
 === Management API
 The management API is the interface between the resource owner and the resource provider. It is mainly defined by the capabilities of the resource provider. In case of FHIR the resource server provides a REST interface https://www.hl7.org/fhir/http.html[HL7 - FHIR] to provide access to medical resources.
@@ -237,9 +241,9 @@ A detailed description of the protocol for the management of protected resources
 == Open issues
 
 * DID instead of EOA
-* attribute based access control or groups (e.g. https://blog.blockstream.com/en-treesignatures/#h.wbxhn6ukemzf[1-of-N tree signatures])
-* privacy aware policies (e.g. https://github.com/eth-sri/zkay[zkay: A Language for Private Smart Contracts on Ethereum])
-* device binding of EOA using hardware-backed SECP256 keys
+* attribute/group based access control (e.g. by using https://blog.blockstream.com/en-treesignatures/#h.wbxhn6ukemzf[1-of-N tree signatures])
+* privacy aware policies (e.g. by using https://github.com/eth-sri/zkay[zkay: A Language for Private Smart Contracts on Ethereum])
+* device binding of EOA using hardware-backed SECP256 keys (e.g. by using )
 
 
 
