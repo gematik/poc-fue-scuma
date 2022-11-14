@@ -66,4 +66,5 @@ class ControlApiTests {
             assert(controlApi.unregisterProvider(protectionAuthorizationId))
         }
     }
+
 }

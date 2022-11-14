@@ -12,31 +12,29 @@ import java.util.*
  * Created by rk on 03.11.2022.
  * gematik.de
  */
-class ProtectionApi(contractId: Address, resourceOwnerId: Address, rpc: Rpc) {
-    val contract = ScumaContract(Eth(rpc), Transaction(to=contractId, from = resourceOwnerId))
+open class ProtectionApi(contractId: Address, resourceOwnerId: Address, rpc: Rpc) : ScumaApi(contractId, resourceOwnerId, rpc) {
 
-    fun getResourceCount(): Int {
-        return contract.getResourceCount().toBigInteger().toInt()
+    public override fun getResourceCount(): Int {
+        return super.getResourceCount()
     }
 
-    fun getResourceIds(): List<UUID> {
-        return contract.getResourceIds().map { it.toUUID() }
+    public override fun getResourceIds(): List<UUID> {
+        return super.getResourceIds()
     }
 
-    suspend fun registerResource(protectedResourceId: UUID): Boolean {
-        return contract.registerResource(protectedResourceId.toQuantity()).isSuccess
+    public override suspend fun registerResource(protectedResourceId: UUID): Boolean {
+        return super.registerResource(protectedResourceId)
     }
 
-    fun requestPermissions(userId: Address, permissionRequests: List<PermissionRequest>): List<Permission> {
-        return contract.requestPermissions(userId, permissionRequests.map { ScumaContract.PermissionRequest(it.protectedResourceId.toQuantity(), Quantity(it.requestedMethods.toLong()))}).map{ Permission(it.protectedResourceId.toUUID(), it.grantedMethods.toBigInteger().toLong().toBitSet()) }
+    public override fun requestPermissions(userId: Address, permissionRequests: List<PermissionRequest>): List<Permission> {
+        return super.requestPermissions(userId, permissionRequests)
     }
 
-    suspend fun unregisterAllResources(): Boolean {
-        return contract.unregisterAllResources().isSuccess
+    public override suspend fun unregisterAllResources(): Boolean {
+        return super.unregisterAllResources()
     }
 
-    suspend fun unregisterResource(protectedResourceId: UUID): Boolean {
-        return contract.unregisterResource(protectedResourceId.toQuantity()).isSuccess
+    public override suspend fun unregisterResource(protectedResourceId: UUID): Boolean {
+        return super.unregisterResource(protectedResourceId)
     }
-
 }

@@ -14,39 +14,37 @@ import java.util.*
  * Created by rk on 03.11.2022.
  * gematik.de
  */
-class ControlApi(contractId: Address, resourceOwnerId: Address, rpc: Rpc) {
-    val contract = ScumaContract(Eth(rpc), Transaction(to=contractId, from = resourceOwnerId))
-
-    suspend fun registerProvider(protectionAuthorizationId: Address) : Boolean {
-        return contract.registerProvider(protectionAuthorizationId).isSuccess
+open class ControlApi(contractId: Address, resourceOwnerId: Address, rpc: Rpc) : ScumaApi(contractId, resourceOwnerId, rpc) {
+    public override suspend fun registerProvider(protectionAuthorizationId: Address): Boolean {
+        return super.registerProvider(protectionAuthorizationId)
     }
 
-    fun getProviderCount(): Int {
-        return contract.getProviderCount().toBigInteger().toInt()
+    public override fun getProviderCount(): Int {
+        return super.getProviderCount()
     }
 
-    fun getProviders(): List<Address> {
-        return contract.getProviders()
+    public override fun getProviders(): List<Address> {
+        return super.getProviders()
     }
 
-    suspend fun unregisterAllProviders(): Boolean {
-        return contract.unregisterAllProviders().isSuccess
+    public override suspend fun unregisterAllProviders(): Boolean {
+        return super.unregisterAllProviders()
     }
 
-    suspend fun unregisterProvider(protectionAuthorizationId: Address): Boolean {
-        return contract.unregisterProvider(protectionAuthorizationId).isSuccess
+    public override suspend fun unregisterProvider(protectionAuthorizationId: Address): Boolean {
+        return super.unregisterProvider(protectionAuthorizationId)
     }
 
-    suspend fun setRule(protectedResourceId: UUID, userId: Address, methods: BitSet) : Boolean {
-        return contract.setRule(protectedResourceId.toQuantity(), userId, AbiUint256(methods.toLong())).isSuccess
+    public override suspend fun setRule(protectedResourceId: UUID, userId: Address, methods: BitSet): Boolean {
+        return super.setRule(protectedResourceId, userId, methods)
     }
 
-    suspend fun deleteRule(protectedResourceId: UUID, index: Int): Boolean {
-        return contract.deleteRule(protectedResourceId.toQuantity(), Quantity(index.toLong())).isSuccess
+    public override suspend fun deleteRule(protectedResourceId: UUID, index: Int): Boolean {
+        return super.deleteRule(protectedResourceId, index)
     }
 
-    fun getPolicy(protectedResourceId: UUID): List<Rule> {
-        return contract.getPolicy(protectedResourceId.toQuantity()).map {Rule(it.who, it.how.toBigInteger().toLong().toBitSet())}
+    public override fun getPolicy(protectedResourceId: UUID): List<Rule> {
+        return super.getPolicy(protectedResourceId)
     }
 }
 

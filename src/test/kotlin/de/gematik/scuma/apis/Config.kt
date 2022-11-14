@@ -10,7 +10,7 @@ import java.util.*
  * gematik.de
  */
 val testResource = UUID(0, 1)
-val contractId = Address("0xddff69f60b480ab37dd79a2b93e4298fcefaf8de")
+val contractId = Address("0x68a185cab9607b9beb0b210bf7cc320f3b3a3efb")
 val ownerId = AccountStore.getAccount(AccountStore.TEST_ACCOUNT_1).address
 val userId = AccountStore.getAccount(AccountStore.TEST_ACCOUNT_2).address
 val protectionAuthorizationId = AccountStore.getAccount(AccountStore.TEST_ACCOUNT_4).address

@@ -50,16 +50,18 @@ contract ScumaContract {
     }
 
     function registerProvider(address protectionAuthorizationId) public onlyOwner {
+        uint protectionAuthorizationIdIndex = protectionAuthorizationIdIndices[protectionAuthorizationId];
+        require(protectionAuthorizationIdIndex == 0, 'rejected - protection authorization id is already registered');
         protectionAuthorizationIds.push(protectionAuthorizationId);
         protectionAuthorizationIdIndices[protectionAuthorizationId] = protectionAuthorizationIds.length - 1;
     }
 
     function unregisterProvider(address protectionAuthorizationId) public onlyOwner {
         uint index = protectionAuthorizationIdIndices[protectionAuthorizationId];
-        if (index > 0) {
-            protectionAuthorizationIds[index] = protectionAuthorizationIds[protectionAuthorizationIds.length - 1];
-            protectionAuthorizationIds.pop();
-        }
+        require(index > 0, 'rejected - protection authorization id does not exist');
+        protectionAuthorizationIds[index] = protectionAuthorizationIds[protectionAuthorizationIds.length - 1];
+        protectionAuthorizationIds.pop();
+        delete protectionAuthorizationIdIndices[protectionAuthorizationId];
     }
 
     function getProviderCount() public onlyOwner view returns (uint256){
@@ -84,7 +86,7 @@ contract ScumaContract {
 
     function registerResource(uint256 protectedResourceId) public onlyAuthorizedProviders {
         uint policyIndex = policyIndices[protectedResourceId];
-        require(policyIndex == 0, 'rejected - protected resource already exist');
+        require(policyIndex == 0, 'rejected - protected resource id is already registered');
         ruleLists.push();
         policies.push();
         policies[policies.length - 1].what = protectedResourceId;
@@ -94,7 +96,7 @@ contract ScumaContract {
 
     function unregisterResource(uint256 protectedResourceId) public onlyAuthorizedProviders {
         uint policyIndex = policyIndices[protectedResourceId];
-        require(policyIndex > 0, 'rejected - protected resource does not exist');
+        require(policyIndex > 0, 'rejected - protected resource id does not exist');
         policies[policyIndex] = policies[policies.length - 1];
         policies.pop();
         delete policyIndices[protectedResourceId];
