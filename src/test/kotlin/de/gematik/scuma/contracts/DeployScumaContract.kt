@@ -1,6 +1,7 @@
 package de.gematik.scuma.contracts
 
 import de.gematik.kether.crypto.AccountStore
+import de.gematik.kether.crypto.accountStore
 import de.gematik.kether.eth.Eth
 import de.gematik.kether.eth.types.Address
 import de.gematik.kether.extensions.toHex
@@ -17,7 +18,7 @@ import java.math.BigInteger
 @ExperimentalSerializationApi
 class DeployScumaContract {
 
-    val resourceOwnerId = AccountStore.getAccount(AccountStore.TEST_ACCOUNT_1).address
+    val resourceOwnerId = accountStore.getAccount(AccountStore.TEST_ACCOUNT_1).address
 
     @Test
     fun scumaContractDeploy() {

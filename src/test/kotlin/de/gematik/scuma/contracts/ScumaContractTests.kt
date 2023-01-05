@@ -2,6 +2,7 @@ package de.gematik.scuma.contracts
 
 import de.gematik.kether.abi.types.AbiUint256
 import de.gematik.kether.crypto.AccountStore
+import de.gematik.kether.crypto.accountStore
 import de.gematik.kether.eth.Eth
 import de.gematik.kether.eth.types.Address
 import de.gematik.kether.eth.types.Quantity
@@ -21,9 +22,9 @@ import org.junit.jupiter.api.Test
 class ScumaContractTests {
 
     companion object {
-        val resourceOwnerId = AccountStore.getAccount(AccountStore.TEST_ACCOUNT_1).address
-        val protectionAuthorizationId = AccountStore.getAccount(AccountStore.TEST_ACCOUNT_4).address
-        val scumaContractId = Address("0xddff69f60b480ab37dd79a2b93e4298fcefaf8de")
+        val resourceOwnerId = accountStore.getAccount(AccountStore.TEST_ACCOUNT_1).address
+        val protectionAuthorizationId = accountStore.getAccount(AccountStore.TEST_ACCOUNT_4).address
+        val scumaContractId = Address("0xba1a4f08001416a630e19e34abd260f039874e92")
         lateinit var scumaResourceOwner: ScumaContract
         lateinit var scumaResourceProvider: ScumaContract
 

@@ -2,7 +2,7 @@ package de.gematik.scuma.hoba
 
 import de.gematik.kether.abi.types.AbiAddress
 import de.gematik.kether.extensions.keccak
-import de.gematik.kether.extensions.toAccount
+import de.gematik.kether.extensions.toAccountAddress
 import org.apache.tuweni.bytes.Bytes
 import org.apache.tuweni.bytes.Bytes32
 import org.bouncycastle.asn1.sec.SECNamedCurves
@@ -43,7 +43,7 @@ class HobaAuthorizationCredential(val challenge: ByteArray, val nonce: ByteArray
     fun sign(privateKey: SECPPrivateKey, origin: String, realm: String? = null) {
         val signer = SECP256K1()
         val secKeyPair = signer.createKeyPair(privateKey)
-        kid = secKeyPair.publicKey.toAccount()
+        kid = secKeyPair.publicKey.toAccountAddress()
         signature = signer.sign(Bytes32.wrap(getHobaTbs(origin, realm).keccak()), secKeyPair)
     }
 
@@ -52,7 +52,7 @@ class HobaAuthorizationCredential(val challenge: ByteArray, val nonce: ByteArray
         val signer = SECP256K1()
         val hash = Bytes32.wrap(getHobaTbs(origin, realm).keccak())
         val publicKey = signer.recoverPublicKeyFromSignature(hash, signature).get()
-        return publicKey.toAccount() == kid && signer.verify(hash, signature, publicKey)
+        return publicKey.toAccountAddress() == kid && signer.verify(hash, signature, publicKey)
     }
 
     override fun toString(): String {
