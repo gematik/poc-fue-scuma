@@ -3,19 +3,19 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.7.10"
     kotlin("plugin.serialization") version "1.7.10"
-    id("de.gematik.kether.codegen") version "1.0-SNAPSHOT"
+    id("de.gematik.kether.codegen") version "1.0"
+    id("maven-publish")
 }
 
 group = "de.gematik.scuma"
-version = "1.0-SNAPSHOT"
+version = "1.0"
 
 repositories {
-    mavenLocal()
     mavenCentral()
     maven {
         url = uri("https://hyperledger.jfrog.io/artifactory/besu-maven/")
     }
-
+    maven(url = "https://repo.labor.gematik.de/repository/maven-public/")
 }
 
 dependencies {
@@ -38,4 +38,12 @@ tasks.withType<KotlinCompile> {
 
 configure<de.gematik.kether.codegen.CodeGeneratorPluginExtension> {
     packageName.set("de.gematik.scuma.contracts")
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("scumaJar") {
+            from(components["java"])
+        }
+    }
 }
