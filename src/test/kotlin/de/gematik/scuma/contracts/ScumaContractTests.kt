@@ -24,7 +24,7 @@ class ScumaContractTests {
     companion object {
         val resourceOwnerId = accountStore.getAccount(AccountStore.TEST_ACCOUNT_1).address
         val protectionAuthorizationId = accountStore.getAccount(AccountStore.TEST_ACCOUNT_4).address
-        val scumaContractId = Address("0xba1a4f08001416a630e19e34abd260f039874e92")
+        val scumaContractId = Address("0x42699a7612a82f1d9c36148af9c77354759b210b")
         lateinit var scumaResourceOwner: ScumaContract
         lateinit var scumaResourceProvider: ScumaContract
 
