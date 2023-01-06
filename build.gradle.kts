@@ -3,19 +3,16 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.7.10"
     kotlin("plugin.serialization") version "1.7.10"
-    id("de.gematik.kether.codegen") version "1.0-SNAPSHOT"
+    id("de.gematik.kether.codegen") version "1.0"
 }
 
 group = "de.gematik.scuma"
 version = "1.0-SNAPSHOT"
 
 repositories {
-    mavenLocal()
+    maven(url="https://repo.labor.gematik.de/repository/maven-public/")
     mavenCentral()
-    maven {
-        url = uri("https://hyperledger.jfrog.io/artifactory/besu-maven/")
-    }
-
+    maven(url ="https://hyperledger.jfrog.io/artifactory/besu-maven/")
 }
 
 dependencies {
