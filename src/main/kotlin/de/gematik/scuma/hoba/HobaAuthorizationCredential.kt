@@ -1,14 +1,10 @@
 package de.gematik.scuma.hoba
 
 import de.gematik.kether.abi.types.AbiAddress
+import de.gematik.kether.crypto.EcdsaPrivateKey
+import de.gematik.kether.crypto.EcdsaSignature
+import de.gematik.kether.crypto.EllipticCurve
 import de.gematik.kether.extensions.keccak
-import de.gematik.kether.extensions.toAccountAddress
-import org.apache.tuweni.bytes.Bytes
-import org.apache.tuweni.bytes.Bytes32
-import org.bouncycastle.asn1.sec.SECNamedCurves
-import org.hyperledger.besu.crypto.SECP256K1
-import org.hyperledger.besu.crypto.SECPPrivateKey
-import org.hyperledger.besu.crypto.SECPSignature
 import java.util.*
 
 /**
@@ -19,10 +15,21 @@ class HobaAuthorizationCredential(val challenge: ByteArray, val nonce: ByteArray
 
     constructor(challenge: String, nonce: ByteArray) : this(Base64.getUrlDecoder().decode(challenge), nonce)
 
-    private val alg = 3 // SECP256K1 with keccak256
+    enum class Alg(val alg: Int){
+        secp256k1(3), // ECDSA with SECP256K1 with keccak256
+        secp256r1(4) // ECDSA with SECP256r1 with keccak256
+    }
+
+    val alg = Alg.secp256k1
+
+    val curve = when(alg){
+        Alg.secp256r1 -> EllipticCurve.secp256r1
+        Alg.secp256k1 -> EllipticCurve.secp256k1
+    }
+
     lateinit var kid: AbiAddress
         private set
-    lateinit var signature: SECPSignature
+    lateinit var signature: EcdsaSignature
         private set
 
     companion object {
@@ -33,31 +40,27 @@ class HobaAuthorizationCredential(val challenge: ByteArray, val nonce: ByteArray
             require(resultMap.size == 4) { "malformed credential - invalid number of result parts: expected 4 is ${resultMap.size}" }
             return HobaAuthorizationCredential(resultMap[1], Base64.getUrlDecoder().decode(resultMap[2])).apply {
                 kid = AbiAddress(resultMap[0])
-                val order = SECNamedCurves.getByName(SECP256K1.CURVE_NAME).n
-                val signatureBytes = Bytes.wrap(Base64.getUrlDecoder().decode(resultMap[3]))
-                signature = SECPSignature.decode(signatureBytes, order)
+                signature = EcdsaSignature(Base64.getUrlDecoder().decode(resultMap[3]), curve)
             }
         }
     }
 
-    fun sign(privateKey: SECPPrivateKey, origin: String, realm: String? = null) {
-        val signer = SECP256K1()
-        val secKeyPair = signer.createKeyPair(privateKey)
-        kid = secKeyPair.publicKey.toAccountAddress()
-        signature = signer.sign(Bytes32.wrap(getHobaTbs(origin, realm).keccak()), secKeyPair)
+    fun sign(privateKey: EcdsaPrivateKey, origin: String, realm: String? = null) {
+        val publicKey = privateKey.createEcdsaPublicKey()
+        kid = publicKey.toAccountAddress()
+        signature = privateKey.sign(getHobaTbs(origin, realm).keccak(), publicKey)
     }
 
     fun verify(origin: String, realm: String? = null): Boolean {
         require(::signature.isInitialized) { "credential isn't signed" }
-        val signer = SECP256K1()
-        val hash = Bytes32.wrap(getHobaTbs(origin, realm).keccak())
-        val publicKey = signer.recoverPublicKeyFromSignature(hash, signature).get()
-        return publicKey.toAccountAddress() == kid && signer.verify(hash, signature, publicKey)
+        val hash = (getHobaTbs(origin, realm).keccak())
+        val publicKey = signature.recoverPublicKey(hash)
+        return publicKey?.toAccountAddress() == kid &&  publicKey.verify(hash, signature)
     }
 
     override fun toString(): String {
         return """HOBA result="$kid.${Base64.getUrlEncoder().encodeToString(challenge)}.${Base64.getUrlEncoder().encodeToString(nonce)}.${
-            Base64.getUrlEncoder().encodeToString(signature.encodedBytes().toArray())
+            Base64.getUrlEncoder().encodeToString(signature.getEncoded())
         }""""
     }
 

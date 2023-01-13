@@ -1,9 +1,5 @@
 package de.gematik.scuma.hoba
 
-import de.gematik.kether.abi.types.AbiAddress
-import de.gematik.kether.extensions.keccak
-import org.hyperledger.besu.crypto.SECPPublicKey
-
 /**
  * Created by rk on 02.11.2022.
  * gematik.de
