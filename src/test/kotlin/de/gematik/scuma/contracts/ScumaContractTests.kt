@@ -22,9 +22,9 @@ import org.junit.jupiter.api.Test
 class ScumaContractTests {
 
     companion object {
-        val resourceOwnerId = accountStore.getAccount(AccountStore.TEST_ACCOUNT_1).address
-        val protectionAuthorizationId = accountStore.getAccount(AccountStore.TEST_ACCOUNT_4).address
-        val scumaContractId = Address("0xba1a4f08001416a630e19e34abd260f039874e92")
+        val resourceOwnerId = accountStore.getAccount(AccountStore.TEST_ACCOUNT_1_R).address
+        val protectionAuthorizationId = accountStore.getAccount(AccountStore.TEST_ACCOUNT_3_R).address
+        val scumaContractId = Address("0x42699a7612a82f1d9c36148af9c77354759b210b")
         lateinit var scumaResourceOwner: ScumaContract
         lateinit var scumaResourceProvider: ScumaContract
 
@@ -32,7 +32,7 @@ class ScumaContractTests {
         @JvmStatic
         fun scumaInit() {
             runBlocking {
-                val ethereum1 = Eth(Rpc("http://ethereum1.lab.gematik.de:8545", "ws://ethereum1.lab.gematik.de:8546"))
+                val ethereum1 = Eth(Rpc("http://besu.lab.gematik.de:8545", "ws://besu.lab.gematik.de:8546"))
                 scumaResourceOwner = ScumaContract(
                     ethereum1,
                     Transaction(to = scumaContractId, from = resourceOwnerId)

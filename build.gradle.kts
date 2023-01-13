@@ -9,21 +9,28 @@ plugins {
 
 group = "de.gematik.scuma"
 version = "1.0-SNAPSHOT"
+val ktor_version = "2.2.2"
 
 repositories {
-    maven(url="https://repo.labor.gematik.de/repository/maven-public/")
     mavenCentral()
+    mavenLocal()
     maven(url ="https://hyperledger.jfrog.io/artifactory/besu-maven/")
 }
 
 dependencies {
-    implementation("de.gematik.kether:kether:1.0-SNAPSHOT")
+    implementation("de.gematik.kether:kether:1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4")
-    implementation("org.hyperledger.besu.internal:crypto:22.7.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
     testImplementation("org.junit.platform:junit-platform-suite-engine:1.9.1")
+    implementation("io.ktor:ktor-server-core-jvm:2.2.2")
+    implementation("io.ktor:ktor-server-netty-jvm:2.2.2")
+    implementation("io.ktor:ktor-server-default-headers:2.2.2")
+    implementation("io.ktor:ktor-server-html-builder:2.2.2")
+    implementation("io.ktor:ktor-client-core-jvm:2.2.2")
+    implementation("io.ktor:ktor-client-core:$ktor_version")
+    implementation("io.ktor:ktor-client-cio:$ktor_version")
 }
 
 tasks.test {

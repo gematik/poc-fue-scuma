@@ -1,13 +1,7 @@
 package de.gematik.scuma.apis
 
-import de.gematik.kether.abi.types.AbiUint256
-import de.gematik.kether.abi.types.AbiUint8
-import de.gematik.kether.eth.Eth
 import de.gematik.kether.eth.types.Address
-import de.gematik.kether.eth.types.Quantity
-import de.gematik.kether.eth.types.Transaction
 import de.gematik.kether.rpc.Rpc
-import de.gematik.scuma.contracts.ScumaContract
 import java.util.*
 
 /**
