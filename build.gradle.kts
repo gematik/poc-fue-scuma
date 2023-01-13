@@ -21,7 +21,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4")
-    implementation("org.hyperledger.besu.internal:crypto:22.7.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.1")
     testImplementation("org.junit.platform:junit-platform-suite-engine:1.9.1")
 }
