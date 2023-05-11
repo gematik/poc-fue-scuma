@@ -127,12 +127,12 @@ There are four API supported by the scuma library:
 * Control API between resource owner and SCUMA
 * Protection API between resource provider and SCUMA
 
-The Management API and the Access API should be implemented according to the API used to access the resoures. The scuma library only provides support functions for EOA based authentication of the resource owner. The actual implementations of the Management API and the Access API are out of scope of this specification.
+The Management API and the Access API should be implemented according to the API used to access the resoures. The scuma library only provides support functions for EOA based authentication. The actual implementations of the Management API and the Access API are out of scope of this specification.
 
 The Control and Protection API uses the Ethereum JSON RPC protocol to interact with Ethereum clients and the smart contracts hosted on the Ethereum block chain. The scuma library hides the complexity of the Ethereum JSON RPC protocol and allows to interact with the scuma contract by an interface entirely defined in kotlin.
 
 === User APIs (Access API and Management API)
-The User APIs are the interface between the users (resource owner and resource user) and the resource provider. They are mainly defined by the capabilities of the resource provider. In case of FHIR the resource server provides a REST interface https://www.hl7.org/fhir/http.html[HL7 - FHIR] to provide access to medical resources.
+The User APIs are the interfaces between the users (resource owner and resource user) and the resource provider. They are mainly defined by the capabilities of the resource provider. In case of FHIR the resource server provides a REST interface https://www.hl7.org/fhir/http.html[HL7 - FHIR] to provide access to medical resources.
 Further, the resource owner uses the Management API to request protection of accessed resources and to get information about protected resources (e.g. the protected resource id). In order to make sure that these interfaces are only used by the authorized users, the users need to be authenticated by the resource server.
 
 ==== HTTP Origin-Bound Authentication (HOBA)
@@ -229,7 +229,9 @@ val hobaAuthorizationCedential = hobaAuthorizationCedential(
 }
 val authorizationHeaderContent = hobaAuthorizationCedential.toString()
 ----
-The scuma library has extended the HOBA RFC by a new signature algorithm. Instead of the defined RSA algorithms the scuma library uses SECP256K1. That is the crypto algorithm used by the Ethereum. So the cryptographic keys bound to the EOAs of the users can be used for authentication.
+The scuma library has extended the HOBA RFC by a new signature algorithm. Instead of the defined RSA algorithms the scuma library uses SECP256K1. That is the crypto algorithm used by the Ethereum block chain. So the cryptographic keys bound to the EOAs of the users can be used for authentication.
+
+In case high level of assurance is required it is recommended to use hardware backed keys (e.g. Android StrongBox). Ethereum uses SECP256K1 by default which unfortunately is not supported by secure elements (e.g. „Titan™ M“- secure chip).  However, when running nodes in a private network, it is possible to configure an alternative elliptic curve. E.g. Hyperledger Besu allows to configure the elliptic curve  in the network section of the genesis file (see https://besu.hyperledger.org/en/22.1.1/HowTo/Configure/Alternative-EC-Curves/[Hyperledger Besu: Using alternative elliptic curves]).
 
 ==== Management of protected resources
 
@@ -244,8 +246,14 @@ A detailed description of the protocol for the management of protected resources
 * DID instead of EOA
 * attribute/group based access control (e.g. by using https://blog.blockstream.com/en-treesignatures/#h.wbxhn6ukemzf[1-of-N tree signatures])
 * privacy aware policies (e.g. by using https://github.com/eth-sri/zkay[zkay: A Language for Private Smart Contracts on Ethereum])
-* device binding of EOA using hardware-backed SECP256 keys (e.g. by using )
 
+== Appendix
 
+=== Smart Contract
+
+[source,solidity]
+----
+include::src/main/kotlin/de/gematik/scuma/contracts/Scuma.sol[]
+----
 
 
