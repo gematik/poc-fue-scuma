@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     kotlin("jvm") version "1.7.10"
     kotlin("plugin.serialization") version "1.7.10"
-    id("de.gematik.kether.codegen") version "1.2"
+    id("de.gematik.kether.codegen") version "1.3.1"
     id("maven-publish")
 }
 
@@ -12,12 +12,12 @@ version = "1.0"
 val ktor_version = "2.2.2"
 
 repositories {
-    maven(url="https://repo.labor.gematik.de/repository/maven-public/")
+    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
-    implementation("de.gematik.kether:kether:1.0-SNAPSHOT")
+    implementation("de.gematik.kether:kether:1.4.2")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4")

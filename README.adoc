@@ -1,10 +1,44 @@
-= SCUMA - Smart Contract based User Managed Access
-:toc:
-:toclevels: 4
+:doctype: book
 :icons: font
 :source-highlighter: rouge
+ifndef::env-github[]
+image::Gematik_Logo_Flag_With_Background.png[logo,width=200,height=47,role=right]
+endif::[]
+ifdef::env-github[]
+++++
+<img align="right" width="250" height="47" src="Gematik_Logo_Flag_With_Background.png"/> <br/>
+++++
+endif::[]
+
+= SCUMA - Smart Contract based User Managed Access
+
+++++
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+    </li>
+    <li><a href="#definitions">Definitions</a></li>
+    <li><a href="#use-cases">Use Cases</a></li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+  </ol>
+</details>
+++++
+
+== About The Project
 
 This concept defines a smart contract which allows the owner of a resource to grant access to resources he owns to particular users.
+This Work ist part of a discontinued collaboration within https://idunion.org/projekt/?lang=en[IDUnion project]
+
 
 == Definitions
 
@@ -118,6 +152,12 @@ USER <-- PROVIDER : 200 Resources Coookie: SessionCookie
 
 @enduml
 ----
+
+== Getting Started
+
+=== Prerequisites
+https://github.com/gematik/poc-fue-ketherPlugin[kether-plugin] and https://github.com/gematik/poc-fue-kether[kether] needs to be installed to MavenLocal to build this project.
+
 == Usage
 
 There are four API supported by the scuma library:
@@ -255,6 +295,9 @@ A detailed description of the protocol for the management of protected resources
 ----
 include::src/main/kotlin/de/gematik/scuma/contracts/Scuma.sol[]
 ----
+
+== Contributing
+This project is part of a proof of concept which is no longer being maintained.
 
 == License
 
